@@ -1,0 +1,178 @@
+!------------------------------------------------------------
+!Read input and create output tables
+!------------------------------------------------------------
+
+!readmytable,file=initial_distribution_fat_halo_60.txt, table=initial_distribution;
+
+!================================
+! Misa in Sextant 2
+!================================
+
+misa_knob = 0.0;
+
+SELECT, FLAG= ERROR, PATTERN= "MBB.21530";
+EALIGN, DX= 0.0 + misa_knob, DTHETA=798.7e-6;
+
+SELECT, FLAG= ERROR, PATTERN= "MBB.21550";
+EALIGN, DX= 5.0e-3 + misa_knob, DTHETA=798.7e-6;
+
+SELECT, FLAG= ERROR, PATTERN= "MBA.21570";
+EALIGN, DX= 10.0e-3 + misa_knob, DTHETA=159.7e-6;
+
+SELECT, FLAG= ERROR, PATTERN= "MBA.21590";
+EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+
+create, table = tune_var, column = giri, kqf1, kqf2, kqd;
+
+
+tr$macro(turn): macro = {
+          
+          giri = turn;
+          fill, table = tune_var;
+                
+         };
+
+
+/******************************
+* Qh = 26.63
+******************************/
+
+kqf1_start_nom =        0.014638481 ;
+kqd_start_nom =     -0.01463347009 ;
+
+/*****************************
+* Qh = 26.6764
+*****************************/
+
+kqf1_end_nom =      0.01465555361 ;
+kqd_end_nom =      -0.0146366498 ;
+
+/*****************************
+* Qh = 26.64
+*****************************/
+kqf1_start =      0.01464216062 ;
+kqd_start =     -0.01463415566 ;
+
+/******************************
+* 26.6864
+******************************/
+
+kqf1_end =      0.01465923277 ;
+kqd_end =     -0.01463733464 ;
+
+/******************************
+* 26.615
+******************************/
+
+!kqf1_start =      0.01463296141 ;
+!kqd_start =     -0.01463244145 ;
+
+
+call, file = 'matchtune.cmdx';
+!kqf1 = kqf1_start ;
+!kqd  = kqd_start ;
+
+select, flag=twiss, clear;
+select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy, dpx, dpy;
+TWISS, DELTAP=0.0;
+write, table=twiss, file="twiss_before_track_thin.tfs";
+
+m_f = (kqf1_start_nom - kqf1_end_nom) / (1 - 204565);
+m_d = (kqd_start_nom - kqd_end_nom) / (1 - 204565);
+
+n_f = kqf1_start - m_f;
+n_d = kqd_start - m_d;
+
+!kqf1 := m_f * tr$turni + n_f ;
+!kqd := m_d * tr$turni + n_d ;
+
+
+!readmytable,file=initial_distribution.txt, table=initial_distribution;
+!readmytable,file=initial_dis_1sigma_.txt, table=initial_distribution;
+
+option,-info;   
+                        ! otherwise you get warnings
+
+ini_track_macro(zz): macro = {
+    x0 = table(initial_distribution, x, zz);
+    px0 = table(initial_distribution, px, zz);
+    y0 = table(initial_distribution, y, zz);
+    py0 = table(initial_distribution, py, zz);
+    t0  = table(initial_distribution, t, zz);
+    pt0 = table(initial_distribution, pt, zz);
+
+    start, x=x0, px=px0, y=y0, py=py0, t=0, pt=0;
+
+};
+
+ini_track_normalised_macro(zz): macro = {
+    
+    n_sigma = (zz / 40) * 7;
+    phi_x = 0;
+
+    dpp = 1.6e-4;
+
+    emit_x = 2.8e-8;
+
+    betax = table(twiss, SPS$START, betx);
+    alfax = table(twiss, SPS$START, alfx);
+
+    x_norm = n_sigma * sqrt(emit_x) * cos(phi_x);
+    px_norm = n_sigma * sqrt(emit_x) * sin(phi_x);
+    
+
+    x0 = x_norm * sqrt(betax) + table(twiss, SPS$START, dx) * dpp;
+    px0 = (sqrt(betax) * px_norm - x0 * alfax) / betax + table(twiss, SPS$START, dpx) * dpp;
+    
+    start, x=x0, px=px0, y=0, py=0, t=0, pt=dpp;
+    
+};
+
+
+
+ini_track_action_macro(zz): macro = {
+
+    fx0 = zz / 40;
+    phix0 = pi/4;
+
+    fy0 = 0;
+    phiy0 = 0;
+    
+    dpp = 3;
+    ft0 = dpp * 1/4.3e3; ! => units of 1e-4
+    phit0 = pi/2;
+
+    start, fx = fx0, phix = phix0, fy = fy0, phiy = phiy0, ft = ft0, phit = phit0;
+
+
+};
+Nparticles = 40 ;
+
+
+TRACK, onetable=true, onepass, recloss, aperture, 
+file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/track_out_action_angle_";      
+
+    j = 1;
+    while(j <= Nparticles)
+    {
+        value,j;
+
+        !exec, ini_track_action_macro($j);
+
+        exec, ini_track_normalised_macro($j);
+
+        j=j+1;
+        
+    };
+    
+
+    !observe, place = mba.21590..4;
+    observe, place = ap.up.zs21633;
+    !observe, place = CRYSTAL3.UA9;
+    run, turns = 500, ffile = 100;                                            
+
+ENDTRACK;
+
+write, table = trackloss, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/losses_action_angle.tfs";
+
+stop;

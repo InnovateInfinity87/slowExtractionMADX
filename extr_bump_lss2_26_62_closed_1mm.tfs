@@ -1,0 +1,10 @@
+@TITLE  "extr_bump_lss2_26_62_closed_1mm" 
+@ NAME %05s  "TWISS" 
+@ TIME %08s  "12.40.00 
+* NAME KICK 
+$ %s       %le
+"logical.MPSH21202/K"  -1.45405412723e-06 
+"logical.MPLH21431/K"  1.03540127617e-05 
+"logical.MPNH21732/K"  7.0870212766e-06 
+"logical.MPLH21995/K"  5.64006255319e-06 
+"logical.MPLH22195/K"  -7.50925765532e-06

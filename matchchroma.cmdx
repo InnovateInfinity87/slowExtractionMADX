@@ -1,0 +1,36 @@
+/******************************************************
+ * MATCH2:   DQ1=-1*QH & DQ2=0.*QV
+ * for SFTPRO at flat top
+ ******************************************************/
+
+qh_int = table(summ, q1);
+qv_int = table(summ, q2);
+value, KlSDA,klSDB,KlSFA,KlSFB;
+
+!KlSDA = -0.1381499551  ;
+!KlSDB = -0.1306869357  ;
+!KlSFA = 0.0356031813   ;
+!KlSFB = 0.020500673    ;
+
+KlSDA = -0.189  ;
+KlSDB = -0.1653  ;
+KlSFA = 0.0395   ;
+KlSFB = 0.0276    ;
+
+match, sequence=SPS;
+
+VARY, name=KlSDA, step=0.0001;
+VARY, name=KlSDB, step=0.0001;
+VARY, name=KlSFA, step=0.0001;
+VARY, name=KlSFB, step=0.0001;
+
+Global, sequence=SPS, DQ1= -0.77 * qh_int;
+Global, sequence=SPS, DQ2=  0.465 * qv_int;
+Global, sequence=SPS, Q1= qh_int;
+Global, sequence=SPS, Q2= qv_int;
+
+!Global, sequence=SPS, DDQ1=0.0;
+!Global, sequence=SPS, DDQ2=0.0;
+
+Lmdif, calls=500, tolerance=1e-6;
+Endmatch;

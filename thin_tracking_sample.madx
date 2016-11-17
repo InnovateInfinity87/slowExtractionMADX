@@ -1,0 +1,189 @@
+!------------------------------------------------------------
+!Read input and create output tables
+!------------------------------------------------------------
+
+!readmytable,file=initial_distribution_fat_halo_60.txt, table=initial_distribution;
+readmytable,file=initial_distribution_parab.txt, table=initial_distribution;
+!readmytable,file=dpp_dist_after_gym.tsv, table=initial_dpp;
+!readmytable,file=initial_distribution_halo_chain10.txt, table=initial_distribution;
+
+SELECT, FLAG= ERROR, PATTERN= "TIDH.11795";
+EALIGN, DX= -0.00425, DY= -0.00611;
+EPRINT;
+
+SELECT, FLAG= ERROR, PATTERN= "TIDV.11892";
+EALIGN, DY= -0.00194;
+
+!================================
+! Misa in Sextant 2
+!================================
+
+misa_knob = 0e-3;
+
+SELECT, FLAG= ERROR, PATTERN= "MBB.21530";
+EALIGN, DX= 0.0 + misa_knob, DTHETA=798.7e-6;
+
+SELECT, FLAG= ERROR, PATTERN= "MBB.21550";
+EALIGN, DX= 5.0e-3 + misa_knob, DTHETA=798.7e-6;
+
+SELECT, FLAG= ERROR, PATTERN= "MBA.21570";
+EALIGN, DX= 10.0e-3 + misa_knob, DTHETA=159.7e-6;
+
+SELECT, FLAG= ERROR, PATTERN= "MBA.21590";
+EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+
+SELECT, FLAG= ERROR, PATTERN= "VVSB.21601";
+EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+
+
+tablemacro(xx,yy,zz): macro = {kv = table(xx,yy,zz);};
+
+create, table = tune_var, column = giri, kqf1, kqf2, kqd;
+
+tr$macro(turn): macro = {
+          
+          giri = turn;
+          fill, table = tune_var;
+                
+         };
+
+
+/******************************
+* Qh = 26.63
+******************************/
+
+kqf1_start_nom =        0.014638481 ;
+kqd_start_nom =     -0.01463347009 ;
+
+/*****************************
+* Qh = 26.6764
+*****************************/
+
+kqf1_end_nom =      0.01465555361 ;
+kqd_end_nom =      -0.0146366498 ;
+
+/*****************************
+* Qh = 26.64
+*****************************/
+kqf1_start =      0.01464216062 ;
+kqd_start =     -0.01463415566 ;
+
+/******************************
+* 26.6864
+******************************/
+
+kqf1_end =      0.01465923277 ;
+kqd_end =     -0.01463733464 ;
+
+/******************************
+* 26.615
+******************************/
+
+kqf1_start =      0.01463296141 ;
+kqd_start =     -0.01463244145 ;
+
+
+!kqfv1 = kqf1_start ;
+!kqd  = kqd_start ;
+
+value, kqf1, kqd;
+/**********************
+dpp_extreme = 1.5e-3/2;
+
+qh = 26.66666 - dpp_extreme * table(summ, dq1);
+qv = 26.58 ;
+match, sequence=SPS;
+
+
+Global, Q1=qh, Q2= qv;
+VARY, name=KQD, step=0.0001;
+VARY, name=KQF1, step=0.0001;
+Lmdif,calls=10,tolerance=1.0e-21;
+Endmatch;
+
+*****************/
+value, kqf1, kqd;
+
+!/***************
+! dpp = 1.5e-3
+kqf1_end =      0.01467121309 ;
+kqd_end =     -0.01463747197 ;
+
+! dpp = -1.5e-3
+kqf1_start =      0.01463761455 ;
+kqd_start =     -0.01463122054 ;
+
+! dpp = 0.75e-3
+!kqf1_end =      0.01466537139 ;
+!kqd_end =     -0.01463640051 ;
+
+! dpp = -0.75e-3
+!kqf1_start =      0.01464320906 ;
+!kqd_start =     -0.01463228656 ;
+
+
+kqf1 = kqf1_start ;
+kqd = kqd_start ;
+!*********************/
+
+select, flag=twiss, clear;
+select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy, dpx, dpy;
+TWISS, DELTAP=0.0;
+write, table=twiss, file="twiss_before_track_thin.tfs";
+
+
+Nturns = 204565;
+
+m_f = (kqf1_start - kqf1_end) / (1 - Nturns);
+m_d = (kqd_start - kqd_end) / (1 - Nturns);
+
+n_f = kqf1_start - m_f;
+n_d = kqd_start - m_d;
+
+kqf1 := m_f * tr$turni + n_f ;
+kqd := m_d * tr$turni + n_d ;
+
+option,-info;
+                        ! otherwise you get warnings
+
+ini_track_macro(zz): macro = {
+    x0 =  table(initial_distribution, x, zz);
+    px0 = table(initial_distribution, px, zz);
+    y0 =  table(initial_distribution, y, zz);
+    py0 = table(initial_distribution, py, zz);
+    t0  = table(initial_distribution, t, zz);
+    pt0 = table(initial_distribution, pt, zz);
+
+    start, x=x0, px=px0, y=y0, py=py0, t=t0, pt=pt0;
+
+};
+
+Nparticles = 100000 ;
+Nturns = 100;
+
+TRACK, dump, onetable=true, onepass, aperture,  recloss, 
+update, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/track_out_sample_se_";
+
+    j = 1;
+    while(j <= Nparticles)
+    {
+        value,j;
+
+        exec, ini_track_macro($j);
+
+        j=j+1;
+
+    };
+
+    observe, place = CRYSTAL_lss4.UA9;
+
+    !observe, place = mbb.21530;
+    observe, place = ap.up.zs21633;
+    run, turns = Nturns, ffile = 1;
+
+ENDTRACK;
+
+write, table = trackloss, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/losses_sample_se.tfs";
+
+
+value, Ex, (beam->exn);

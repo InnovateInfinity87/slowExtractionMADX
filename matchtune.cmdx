@@ -1,0 +1,43 @@
+!--------------------------------------------------------------------------
+! Tune matching
+!--------------------------------------------------------------------------
+
+
+
+!--------------------------------------------------------------------------
+! Before match
+!--------------------------------------------------------------------------
+!select, flag=twiss, clear;
+!select, flag=twiss, range=#S/#E,
+!        column=name,s,betx,alfx,x,dx,dpx,bety,alfy;
+
+!TWISS, DELTAP=0.0;
+!write, table=twiss, file=twiss_before.prt;
+
+
+
+!--------------------------------------------------------------------------
+! match LHC optics (Q20)   (LHC 26.13/26.18)
+!--------------------------------------------------------------------------
+
+!qh = 26.62 ;
+qh = 26.66666 ;
+qv = 26.58 ;
+match, sequence=SPS;
+
+
+Global, Q1=qh, Q2= qv;
+VARY, name=KQD, step=0.0001;
+VARY, name=KQF1, step=0.0001;
+Lmdif,calls=10,tolerance=1.0e-21;
+Endmatch;
+
+select, flag=twiss, clear;
+select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy;
+twiss,  sequence=sps, file=twiss_ideal_se.tfs, save;
+
+value, KQD, KQF1, KQF2;
+
+
+value, tune_h,tune_v;
+return;

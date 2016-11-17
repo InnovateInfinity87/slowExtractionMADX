@@ -1,0 +1,179 @@
+find_misa_macro(correct_x, correct_y, orbit_name): macro = {
+    
+    /************************************************************************
+    * Be aware, this can only be executed using madx64 on my usr-local-bin-
+    * due to a bag in the normal madx!!!
+    ************************************************************************/
+
+
+    select, flag=twiss, clear;
+    select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2,alfx,alfy,mux,muy,dpx,dpy;
+    !select, flag=twiss, class=bpcn, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2,alfx,alfy,mux,muy,dpx,dpy;
+    TWISS,  deltap=0.00;
+    write, table = twiss, file = "before_test.tfs";
+    twiss, table=my_model;                                                                                                
+                                                                                                                          
+    readmytable, file="yasp_orbit_name_h.tfs", table=x_target;                                                                 
+    readmytable, file="yasp_orbit_name_v.tfs", table=y_target;
+    
+                                                                                                                          
+    ! disable monitors and correctors                                                                                     
+    usekick, status=off, class=kicker;                                                                                    
+    usekick, status=off, class=hkicker;                                                                                   
+    usekick, status=off, class=vkicker;                                                                                   
+    usekick, status=on, class=virt_corr;                                                                           
+    
+    ! correction in x                                                                                                     
+    if (correct_x == 1) {
+        
+        usemonitor, status=off, class = vmonitor;                                                                                   
+        usemonitor, status=off, class = hmonitor;                                                                                   
+        usemonitor, status=off, class = monitor;                                                                                   
+        usemonitor, status=on, class = BPH;                                                                                   
+        usemonitor, status=on, class = BPCN; 
+                                                                                           
+        correct, flag=ring, mode=svd, plane=x, error=1e-18, corzero=1,                                                    
+            extern, target=x_target,                                                     
+            clist="correctors_x.tfs", mlist="monitors_x.tfs", resout=1;
+    };                                                                                                                     
+                                                                                                                          
+    ! correction in y                                                                                                      
+    if (correct_y == 1) {                                                                                                 
+        usemonitor, status=off, class = vmonitor;                                                                                   
+        usemonitor, status=off, class = hmonitor;                                                                                   
+        usemonitor, status=off, class = monitor;                                                                                   
+        usemonitor, status=on, class = BPV;                                                                                   
+        usemonitor, status=on, class = BPCN;
+        usemonitor, status=on, class = BPVT;
+        !usemonitor, status=on, class = BPCE;
+        
+        correct, flag=ring, mode=svd, plane=y, error=1e-18, corzero=1,                                                    
+            extern, model=my_model, target=y_target,                                                     
+            clist="correctors_y.tfs", mlist="monitors_y.tfs", resout=1;                                                   
+    };                                                      
+
+    select, flag=twiss, clear;
+    select, flag=twiss, class=bph, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2,alfx,alfy,mux,muy,dpx,dpy;
+    select, flag=twiss, class=bpcn, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2,alfx,alfy,mux,muy,dpx,dpy;
+    TWISS,  deltap=0.00;
+    write, table = twiss, file = "after_correction_orbit_name.tfs";
+
+};
+
+call, file = "virtual_cor.madx";
+use, sequence = sps;
+
+select, flag = makethin, clear;
+select, flag = makethin, class = quadrupole, slice = 4;
+select, flag = makethin, class = rbend, slice = 4;
+select, flag = makethin, class = sextupole, slice = 1;
+
+MAKETHIN, SEQUENCE = sps, STYLE = teapot;
+
+use, sequence = sps;
+
+select, flag=twiss, clear;
+select, flag=twiss, class = monitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
+select, flag=twiss, class = hmonitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
+select, flag=twiss, class = vmonitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
+select, flag=twiss, class = instrument, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
+TWISS, DELTAP=0.0;
+write, table=twiss, file="twiss_before_rematch_thin.tfs";
+
+knob_ext_sext = 0;
+
+call, file = 'matchtune.cmdx';
+call, file = 'matchchroma.cmdx';
+
+
+select, flag=twiss, clear;
+select, flag=twiss, class = monitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
+select, flag=twiss, class = hmonitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
+select, flag=twiss, class = vmonitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
+select, flag=twiss, class = instrument, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
+TWISS, DELTAP=0.0;
+write, table=twiss, file="twiss_after_rematch_thin.tfs";
+
+!value, kqf1, kqd;
+!stop;
+
+extr_bump_knob = extr_bump_knob / 4;
+
+ select, flag=error, range=MPSH_rb.21202..1;
+ efcomp, order:=0, dkn:=7.6765e-5 * knob;
+ select, flag=error, range=MPSH_rb.21202..2;
+ efcomp, order:=0, dkn:=7.6765e-5 * knob;
+ select, flag=error, range=MPSH_rb.21202..3;
+ efcomp, order:=0, dkn:=7.6765e-5 * knob;
+ select, flag=error, range=MPSH_rb.21202..4;
+ efcomp, order:=0, dkn:=7.6765e-5 * knob;
+ EPRINT;
+ select, flag=error, clear;
+ select, flag=error, range=MPLH_rb.21431..1;
+ efcomp, order:=0, dkn:=-0.49e-3 * knob;
+ select, flag=error, range=MPLH_rb.21431..2;
+ efcomp, order:=0, dkn:=-0.49e-3 * knob;
+ select, flag=error, range=MPLH_rb.21431..3;
+ efcomp, order:=0, dkn:=-0.49e-3 * knob;
+ select, flag=error, range=MPLH_rb.21431..4;
+ efcomp, order:=0, dkn:=-0.49e-3 * knob;
+ EPRINT;
+ select, flag=error, clear;
+ select, flag=error, range=MPNH_rb.21732..1;
+ efcomp, order:=0, dkn:=-0.33309e-3 * knob;
+ select, flag=error, range=MPNH_rb.21732..2;
+ efcomp, order:=0, dkn:=-0.33309e-3 * knob;
+ select, flag=error, range=MPNH_rb.21732..3;
+ efcomp, order:=0, dkn:=-0.33309e-3 * knob;
+ select, flag=error, range=MPNH_rb.21732..4;
+ efcomp, order:=0, dkn:=-0.33309e-3 * knob;
+ EPRINT;
+ select, flag=error, clear;
+ select, flag=error, range=MPLH_rb.21995..1;
+ efcomp, order:=0, dkn:=-0.2503e-3 * knob;
+ select, flag=error, range=MPLH_rb.21995..2;
+ efcomp, order:=0, dkn:=-0.2503e-3 * knob;
+ select, flag=error, range=MPLH_rb.21995..3;
+ efcomp, order:=0, dkn:=-0.2503e-3 * knob;
+ select, flag=error, range=MPLH_rb.21995..4;
+ efcomp, order:=0, dkn:=-0.2503e-3 * knob;
+ EPRINT;
+ select, flag=error, clear;
+ select, flag=error, range=MPLH_rb.22195..1;
+ efcomp, order:=0, dkn:=.35585e-3 * knob;
+ select, flag=error, range=MPLH_rb.22195..2;
+ efcomp, order:=0, dkn:=.35585e-3 * knob;
+ select, flag=error, range=MPLH_rb.22195..3;
+ efcomp, order:=0, dkn:=.35585e-3 * knob;
+ select, flag=error, range=MPLH_rb.22195..4;
+ efcomp, order:=0, dkn:=.35585e-3 * knob;
+ EPRINT;
+ select, flag=error, clear;
+
+!exec, find_misa_macro(1, 1, sftpro_ft);
+
+!call, file = "stren.out";
+
+knob_ext_sext = sex_knob_value;
+
+/**********
+temp_qh = table(summ, q1);
+temp_qv = table(summ, q2);
+
+match, sequence=SPS;
+
+Global, Q1 = temp_qh + 0.0585, Q2= temp_qv;
+
+VARY, name=KQD, step=0.0001;
+VARY, name=KQF1, step=0.0001;
+
+Lmdif,calls=10,tolerance=1.0e-21;
+Endmatch;
+***********/
+
+
+select, flag=twiss, clear;
+select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy, dpx, dpy;
+TWISS, DELTAP=0.0;
+write, table=twiss, file="twiss_thin_nom.tfs";
+
