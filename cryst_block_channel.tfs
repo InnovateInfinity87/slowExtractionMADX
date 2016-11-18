@@ -1,9 +1,0 @@
-@TITLE  "cryst_block_channel" 
-@ NAME %05s  "TWISS" 
-@ TIME %08s  "12.40.00 
-* NAME KICK 
-$ %s       %le
-"logical.MPLH41658/K"    1.42255637366e-05
-"logical.MPLH41994/K"    1.06818222683e-05
-"logical.MPSH42198/K"    4.58909025854e-06
-"logical.MPSH41402/K"    -1.1932831939e-06
