@@ -2,10 +2,10 @@
 !Read input and create output tables
 !------------------------------------------------------------
 
-!readmytable,file=initial_distribution_fat_halo_60.txt, table=initial_distribution;
-readmytable,file=initial_distribution.txt, table=initial_distribution;
-readmytable,file=dpp_dist_after_gym.tsv, table=initial_dpp;
-!readmytable,file=initial_distribution_halo_chain10.txt, table=initial_distribution;
+!readmytable,file="../in/initial_distribution_fat_halo_60.txt", table=initial_distribution; ! TODO file missing
+readmytable,file="../in/initial_distribution.txt", table=initial_distribution; ! TODO file missing
+readmytable,file="../in/dpp_dist_after_gym.tsv", table=initial_dpp; ! TODO file missing
+!readmytable,file="../in/initial_distribution_halo_chain10.txt", table=initial_distribution; ! TODO file missing
 
 SELECT, FLAG= ERROR, PATTERN= "TIDH.11795";
 EALIGN, DX= -0.00425, DY= -0.00611;
@@ -129,7 +129,7 @@ kqd = kqd_start ;
 select, flag=twiss, clear;
 select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy, dpx, dpy;
 TWISS, DELTAP=0.0;
-write, table=twiss, file="twiss_before_track_thin.tfs";
+write, table=twiss, file="../out/twiss_before_track_thin.tfs";
 
 
 !Nturns = 204565;
@@ -163,7 +163,7 @@ Nparticles = 1000 ;
 !Nturns = 1;
 
 TRACK, dump, onetable=true, onepass, aperture,  recloss, 
-update, file = "track_out_ship_newset_se_";
+update, file = "../out/track_out_ship_newset_se_";
 
     j = 1;
     while(j <= Nparticles)
@@ -183,6 +183,6 @@ update, file = "track_out_ship_newset_se_";
 
 ENDTRACK;
 
-write, table = trackloss, file = "losses_se_ship_newset_se.tfs";
+write, table = trackloss, file = "../out/losses_se_ship_newset_se.tfs";
 
-write, table = tune_var, file = "tune_flat_top_newset_se.tfs";
+write, table = tune_var, file = "../out/tune_flat_top_newset_se.tfs";

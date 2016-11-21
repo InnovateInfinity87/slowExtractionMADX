@@ -67,7 +67,7 @@ call, file = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
 !--------------------------------------------------------------------------
 ! aperture of individual elements
 !--------------------------------------------------------------------------
- call, file = 'aperturedb_3.dbx';
+ call, file = 'aperture/aperturedb_3.dbx';
 
 
 !--------------------------------------------------------------------------
@@ -152,16 +152,16 @@ option, -echo;
 !--------------------------------------------------------------------------
 use, period=sps;
 
-call, file = 'matchtune.cmdx';
-call, file = 'matchchroma.cmdx';
+call, file = '../cmd/matchtune.cmdx';
+call, file = '../cmd/matchchroma.cmdx';
 
-!call, file = "lss1_q171819_displacement.madx";
+!call, file = "lss1_q171819_displacement.madx";  ! TODO file missing?
 option, -echo;
 
 select, flag=twiss, range=#E,column=name,s,betx,alfx,mux,x,px,dx,dpx,bety,alfy,muy,y,py,dy,dpy;
 TWISS, DELTAP=0.0;
 !savebeta,label=start, place=SPS$START;
-write, table=twiss, file=twiss_nominal_se.tfs;
+write, table=twiss, file="../out/twiss_nominal_se.tfs";
 
 
 !==========================================================
@@ -287,20 +287,20 @@ activate_bump(knob_value) : macro = {
     select, flag=twiss, clear;
     select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
     TWISS, DELTAP=0.0;
-    write, table=twiss, file=twiss_before_extr_knob_value.tfs;
+    write, table=twiss, file="../out/twiss_before_extr_knob_value.tfs";
 
 };
 !********/
 
 exec, activate_bump(1);
-call, file = 'matchchroma.cmdx';
-call, file = 'matchtune.cmdx';
+call, file = '../cmd/matchchroma.cmdx';
+call, file = '../cmd/matchtune.cmdx';
 
 select, flag=twiss, clear;
 savebeta, label = zs_start, place = ap.up.zs21633;
 select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
 TWISS, DELTAP=0.0;
-write, table=twiss, file=twiss_before_extr_normal.tfs;
+write, table=twiss, file="../out/twiss_before_extr_normal.tfs";
 
 
 dpp_extreme = -1.5e-3;
@@ -321,13 +321,13 @@ select, flag=twiss, clear;
 savebeta, label = zs_start, place = ap.up.zs21633;
 select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
 TWISS, DELTAP=0.0;
-write, table=twiss, file=twiss_test_twiss1.tfs;
+write, table=twiss, file="../out/twiss_test_twiss1.tfs";
 
 select, flag=twiss, clear;
 savebeta, label = zs_start, place = ap.up.zs21633;
 select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
 TWISS, DELTAP=dpp_extreme;
-write, table=twiss, file=twiss_test_twiss12.tfs;
+write, table=twiss, file="../out/twiss_test_twiss12.tfs";
 stop;
 
 
@@ -338,7 +338,7 @@ select, flag=twiss, clear;
 savebeta, label = zs_start2, place = ap.up.zs21633;
 select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
 TWISS, DELTAP=0.0;
-write, table=twiss, file=twiss_from_zs.tfs;
+write, table=twiss, file="../out/twiss_from_zs.tfs";
 
 /**********
 select, flag=twiss, clear;
@@ -349,7 +349,7 @@ select, flag=twiss, class = vmonitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy
 select, flag=twiss, class = instrument, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
 
 TWISS, DELTAP=0.0, centre;
-write, table=twiss, file=twiss_centre_before_extr.tfs;
+write, table=twiss, file="../out/twiss_centre_before_extr.tfs";
 **************/
 
 create, table = spiral_step, column = knob_value, delta_x, delta_px, x_zs, px_zs,  final_x, final_px;
@@ -368,19 +368,19 @@ get_spiral_step(x0_bump, px0_bump) : macro = {
     savebeta, label=turn1, place=SPS2AP.UP.ZS21633_P_;
     select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
     TWISS, DELTAP=0.0, beta0=zs_start2;
-    write, table=twiss, file="twiss_bump_1_turn.tfs";
+    write, table=twiss, file="../out/twiss_bump_1_turn.tfs";
 
     select, flag=twiss, clear;
     savebeta, label=turn2, place=SPS2AP.UP.ZS21633_P_;
     select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
     TWISS, DELTAP=0.0, beta0=turn1;
-    write, table=twiss, file="twiss_bump_2_turn.tfs";
+    write, table=twiss, file="../out/twiss_bump_2_turn.tfs";
 
     select, flag=twiss, clear;
     savebeta, label=turn3, place=SPS2AP.UP.ZS21633_P_;
     select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
     TWISS, DELTAP=0.0, beta0=turn2;
-    write, table=twiss, file="twiss_bump_3_turn.tfs";
+    write, table=twiss, file="../out/twiss_bump_3_turn.tfs";
 
     delta_x = table(twiss, SPS2AP.UP.ZS21633_P_, x) - x_zs;
     delta_px = table(twiss, SPS2AP.UP.ZS21633_P_, px) - px_zs;
@@ -416,7 +416,7 @@ while(i <= 40){
 
 };
 
-write, table = spiral_step, file = "spiral_step.tfs";
+write, table = spiral_step, file = "../out/spiral_step.tfs";
 **********************/
 
 ! Extraction bump LSS2

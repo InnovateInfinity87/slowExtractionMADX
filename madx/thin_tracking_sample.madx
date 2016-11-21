@@ -2,10 +2,10 @@
 !Read input and create output tables
 !------------------------------------------------------------
 
-!readmytable,file=initial_distribution_fat_halo_60.txt, table=initial_distribution;
-readmytable,file=initial_distribution_parab.txt, table=initial_distribution;
-!readmytable,file=dpp_dist_after_gym.tsv, table=initial_dpp;
-!readmytable,file=initial_distribution_halo_chain10.txt, table=initial_distribution;
+!readmytable,file="../in/initial_distribution_fat_halo_60.txt", table=initial_distribution; ! TODO file missing
+readmytable,file="../in/initial_distribution_parab.txt", table=initial_distribution; ! TODO file missing
+!readmytable,file="../in/dpp_dist_after_gym.tsv", table=initial_dpp; ! TODO file missing
+!readmytable,file="../in/initial_distribution_halo_chain10.txt", table=initial_distribution; ! TODO file missing
 
 SELECT, FLAG= ERROR, PATTERN= "TIDH.11795";
 EALIGN, DX= -0.00425, DY= -0.00611;
@@ -129,7 +129,7 @@ kqd = kqd_start ;
 select, flag=twiss, clear;
 select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy, dpx, dpy;
 TWISS, DELTAP=0.0;
-write, table=twiss, file="twiss_before_track_thin.tfs";
+write, table=twiss, file="../out/twiss_before_track_thin.tfs";
 
 
 Nturns = 204565;
@@ -162,7 +162,7 @@ Nparticles = 100000 ;
 Nturns = 100;
 
 TRACK, dump, onetable=true, onepass, aperture,  recloss, 
-update, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/track_out_sample_se_";
+update, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/track_out_sample_se_"; ! TODO file access
 
     j = 1;
     while(j <= Nparticles)
@@ -183,7 +183,7 @@ update, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/track_out_sample
 
 ENDTRACK;
 
-write, table = trackloss, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/losses_sample_se.tfs";
+write, table = trackloss, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/losses_sample_se.tfs"; ! TODO file access
 
 
 value, Ex, (beam->exn);
