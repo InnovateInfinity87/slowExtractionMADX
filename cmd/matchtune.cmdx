@@ -12,7 +12,7 @@
 !        column=name,s,betx,alfx,x,dx,dpx,bety,alfy;
 
 !TWISS, DELTAP=0.0;
-!write, table=twiss, file=twiss_before.prt;
+!write, table=twiss, file="out/twiss_before.prt";
 
 
 
@@ -34,7 +34,7 @@ Endmatch;
 
 select, flag=twiss, clear;
 select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy;
-twiss,  sequence=sps, file=twiss_ideal_se.tfs, save;
+twiss,  sequence=sps, file="out/twiss_ideal_se.tfs", save;
 
 value, KQD, KQF1, KQF2;
 

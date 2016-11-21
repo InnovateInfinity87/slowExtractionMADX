@@ -2,7 +2,7 @@
 !Read input and create output tables
 !------------------------------------------------------------
 
-!readmytable,file=initial_distribution_fat_halo_60.txt, table=initial_distribution;
+!readmytable,file="../in/initial_distribution_fat_halo_60.txt", table=initial_distribution;
 
 !================================
 ! Misa in Sextant 2
@@ -68,14 +68,14 @@ kqd_end =     -0.01463733464 ;
 !kqd_start =     -0.01463244145 ;
 
 
-call, file = 'matchtune.cmdx';
+call, file = '../cmd/matchtune.cmdx';
 !kqf1 = kqf1_start ;
 !kqd  = kqd_start ;
 
 select, flag=twiss, clear;
 select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy, dpx, dpy;
 TWISS, DELTAP=0.0;
-write, table=twiss, file="twiss_before_track_thin.tfs";
+write, table=twiss, file="../out/twiss_before_track_thin.tfs";
 
 m_f = (kqf1_start_nom - kqf1_end_nom) / (1 - 204565);
 m_d = (kqd_start_nom - kqd_end_nom) / (1 - 204565);
@@ -87,8 +87,8 @@ n_d = kqd_start - m_d;
 !kqd := m_d * tr$turni + n_d ;
 
 
-!readmytable,file=initial_distribution.txt, table=initial_distribution;
-!readmytable,file=initial_dis_1sigma_.txt, table=initial_distribution;
+!readmytable,file="../in/initial_distribution.txt", table=initial_distribution; ! TODO file missing
+!readmytable,file="../in/initial_dis_1sigma_.txt", table=initial_distribution; ! TODO file missing
 
 option,-info;   
                         ! otherwise you get warnings
@@ -150,7 +150,7 @@ Nparticles = 40 ;
 
 
 TRACK, onetable=true, onepass, recloss, aperture, 
-file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/track_out_action_angle_";      
+file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/track_out_action_angle_"; ! TODO access missing
 
     j = 1;
     while(j <= Nparticles)
@@ -173,6 +173,6 @@ file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/track_out_action_angle_"
 
 ENDTRACK;
 
-write, table = trackloss, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/losses_action_angle.tfs";
+write, table = trackloss, file = "/home/fvelotti/Dropbox/Slow_extraction/tracking/losses_action_angle.tfs"; ! TODO access missing
 
 stop;
