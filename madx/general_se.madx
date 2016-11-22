@@ -67,7 +67,7 @@ call, file = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
 !--------------------------------------------------------------------------
 ! aperture of individual elements
 !--------------------------------------------------------------------------
- call, file = 'aperture/aperturedb_3.dbx';
+ call, file = '../aperture/aperturedb_3.dbx';
 
 
 !--------------------------------------------------------------------------
