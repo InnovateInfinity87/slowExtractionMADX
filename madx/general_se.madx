@@ -1,86 +1,63 @@
-!--------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 ! MADX files for SPS slow extraction 
 !
 ! F.M. Velotti - francesco.maria.velotti@cern.ch
 !
-!--------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 
 
- option, -echo;
- option, RBARC=FALSE;  ! the length of a rectangular magnet
-                       ! is the distance between the polefaces
-                       ! and not the arc length
-!assign, ECHO=ECHO.PRT;
+OPTION, INFO, WARN, -ECHO ;
+OPTION, RBARC=FALSE; ! the length of a rectangular magnet
+                     ! is the distance between the polefaces
+                     ! and not the arc length
 
-! if only quads and bends have to be considered -> linear = 1
-! else -> linear = 0
-
+!ASSIGN, ECHO="../out/echo.prt";
 
 yes := 1;
 no := 0;
 
+! TODO : Which of these switches are relevant?
+
+! if only quads and bends have to be considered -> linear = 1
+! else -> linear = 0
 
 linear = no;
-
 match_extr_bump = no;
-
 match_corr_bump = no;
-
 correction = no;
-
 extraction = yes;
-
 nominal = yes;
 
-!---------------------------------------------------------------
-!         SPECIFY THE SPS BEAM CONFIGURATION, ENERGY and EMITTANCES
-! 
-!---------------------------------------------------------------
-
-call, file = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
-!--------------------------------------------------------------------------
-! call the element definition file for SPS
-!--------------------------------------------------------------------------
- call, file = '/afs/cern.ch/eng/sps/2014/elements/sps.ele';
-
 
 !--------------------------------------------------------------------------
-! call the aperture definition file for SPS. These are groups of elements
-!--------------------------------------------------------------------------
- call, file = '/afs/cern.ch/eng/sps/2014
-               /aperture/aperturedb_1.dbx';
-
-!--------------------------------------------------------------------------
-! aperture of QF1, QF2 and QD
-!--------------------------------------------------------------------------
- call, file = '/afs/cern.ch/eng/sps/2014
-               /aperture/aperturedb_2.dbx';
- option, echo;
-
-
-!--------------------------------------------------------------------------
-! call the sequence definition file for SPS
-!--------------------------------------------------------------------------
- call, file = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq';
-
-
-!--------------------------------------------------------------------------
-! aperture of individual elements
-!--------------------------------------------------------------------------
- call, file = '../aperture/aperturedb_3.dbx';
-
-
-!--------------------------------------------------------------------------
-! call the two strength definition files for SPS: *.str & elements.str
+! Call files for correct initialization of SPS.
+! TODO: 2015 files don't work due to conflict between tcpc and crystal1?
 !--------------------------------------------------------------------------
 
+! SPS beam configuration, energy and emittances.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx' ;
 
-call, file = '/afs/cern.ch/eng/sps/2014
-              /strength/ft_noqs_ext.str';
+! Element definition file for SPS
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/elements/sps.ele' ;
 
- call, file = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
+! Aperture definition file for SPS. These are groups of elements.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_1.dbx' ;
 
+! Aperture of QF1, QF2 and QD.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_2.dbx' ;
 
+! Sequence definition file for SPS.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq' ;
+
+! Aperture of some individual elements.
+! (Local file because some studies need changes)
+CALL, FILE = '../aperture/aperturedb_3.dbx' ;
+
+! Strength definition files for SPS: *.str & elements.str.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
+
+! TODO: Does linear==no ever make sense for se?
 if (linear == yes)
 {
     kLSDA  :=  0;
@@ -90,83 +67,80 @@ if (linear == yes)
     kLSFC  :=  kLSFA;
 };
 
+! Load the SPS sequence.
+USE, SEQUENCE = SPS;
 
 
-
-!------------------------------------------------------------------------
-!install markers and isolate part of the SPS to simulate extractiont trough the TT20 
-!------------------------------------------------------------------------
-
-
-USE, period=SPS, range=#S/#E;
+!-----------------------------------------------------------------------
+! Install elements relevant to the extraction through TT20
+! TODO: relevance? What is the TCSM?
+!-----------------------------------------------------------------------
 /*
 QDA.619.coil       : QUADRUPOLE  , L := 3.791;
 SEQEDIT,SEQUENCE=SPS;
 INSTALL, ELEMENT=EXTRPT_6,CLASS=marker, AT=0.00457 + (3.791 / 2), FROM = QDA.61910;
 flatten;
 ENDEDIT;
+
+USE, SEQUENCE = SPS;
 */
 
-seqedit, sequence = sps;
-INSTALL, ELEMENT = TCSM.new, CLASS=marker, AT=5158.5722, FROM = SPS$START;
-flatten;
-endedit;
+!-----------------------------------------------------------------------
+! Install markers relevant to the crystal MDs
+! (Crystals + new TCSM)
+! TODO: Should new TCSM go into sps repository? Or does it change often?
+!-----------------------------------------------------------------------
 
-s_lss4_crystal = 4031;
+crystal1.ua9: MARKER;
+crystal2.ua9: MARKER;
+crystal3.ua9: MARKER;
+crystal4.ua9: MARKER;
+crystal5.ua9: MARKER;
+crystal_lss4.ua9: MARKER;
 
-CRYSTAL1.UA9: MARKER;
-CRYSTAL2.UA9: MARKER;
-CRYSTAL3.UA9: MARKER;
-CRYSTAL4.UA9: MARKER;
-CRYSTAL5.UA9: MARKER;
-CRYSTAL_lss4.UA9: MARKER;
+s_lss4_crystal = 4031; ! TODO: Why is this a var?
 
-!------------------------------------------------------------------------
-!install markers and isolate part of the SPS to simulate extractiont trough the TT20 
-!------------------------------------------------------------------------
-USE, period=SPS, range=#S/#E;
-
+! TODO: syntax: CLASS= ?
+! TODO: removes bshv and tecs related to tcsm?
 SEQEDIT,SEQUENCE=SPS;
-!remove, element=TCSM.51934;
-remove, element = bshv.51795;
-remove, element = tecs.51797;
-remove, element = tecs.51799;
-!============================================================================================
-install, element= CRYSTAL1.UA9, at := 5178.1685;
-install, element= CRYSTAL_lss4.UA9, at := s_lss4_crystal;
-install, element= CRYSTAL2.UA9, at := 5179.4295;
-install, element= CRYSTAL3.UA9, at := 5179.9245;
-install, element= CRYSTAL4.UA9, at := 5180.8295;
-install, element= CRYSTAL5.UA9, at := 5181.3245;
-!============================================================================================
-flatten;
+! REMOVE, ELEMENT = TCSM.51934;
+ REMOVE, ELEMENT = bshv.51795;
+ REMOVE, ELEMENT = tecs.51797;
+ REMOVE, ELEMENT = tecs.51799;
+ INSTALL, ELEMENT = tcsm.new, CLASS = MARKER, AT = 5158.5722,
+          FROM = SPS$START;
+ INSTALL, ELEMENT = crystal1.ua9, at := 5178.1685;
+ INSTALL, ELEMENT = crystal_lss4.ua9, at := s_lss4_crystal;
+ INSTALL, ELEMENT = crystal2.ua9, at := 5179.4295;
+ INSTALL, ELEMENT = crystal3.ua9, at := 5179.9245;
+ INSTALL, ELEMENT = crystal4.ua9, at := 5180.8295;
+ INSTALL, ELEMENT = crystal5.ua9, at := 5181.3245;
+ FLATTEN;
 ENDEDIT;
 
+USE, SEQUENCE = SPS;
 
-USE, sequence=SPS, range=#s/#e;
 
-option, -echo;
-
-!--------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 ! Match tune and chroma
-!--------------------------------------------------------------------------
-use, period=sps;
+!-----------------------------------------------------------------------
 
-call, file = '../cmd/matchtune.cmdx';
-call, file = '../cmd/matchchroma.cmdx';
+CALL, FILE = '../cmd/matchtune.cmdx';
+CALL, FILE = '../cmd/matchchroma.cmdx';
 
-!call, file = "lss1_q171819_displacement.madx";  ! TODO file missing?
-option, -echo;
+!CALL, FILE = "lss1_q171819_displacement.madx";  ! TODO file missing?
 
-select, flag=twiss, range=#E,column=name,s,betx,alfx,mux,x,px,dx,dpx,bety,alfy,muy,y,py,dy,dpy;
+SELECT, FLAG = TWISS, RANGE = #E, COLUMN = NAME,S,
+        BETX,ALFX,MUX,X,PX,DX,DPX,BETY,ALFY,MUY,Y,PY,DY,DPY;
 TWISS, DELTAP=0.0;
-!savebeta,label=start, place=SPS$START;
-write, table=twiss, file="../out/twiss_nominal_se.tfs";
 
+!savebeta,label=start, place=SPS$START; ! TODO: relevance?
+write, table=twiss, file="../out/twiss_nominal_se.tfs"; ! TODO: Equivalent to putting inside twiss?
+EXIT;
 
-!==========================================================
+!-----------------------------------------------------------------------
 ! Slow extraction sextupoles and bumpers values
-!==========================================================
+!-----------------------------------------------------------------------
 
 ! Values in the last SFT_LONG cycle in trim editor
 
