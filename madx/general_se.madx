@@ -5,6 +5,7 @@
 !
 !-----------------------------------------------------------------------
 ! TODO: Lots of SAVEBETAs seem unnecessary, are they used?
+! TODO: Save sequence and errors at the end to avoid doing this often?
 
 OPTION, INFO, WARN, -ECHO ;
 OPTION, RBARC=FALSE; ! The length of a rectangular magnet is the dist-
@@ -28,10 +29,20 @@ extraction = yes;
 nominal = yes;
 
 
-!--------------------------------------------------------------------------
+!-----------------------------------------------------------------------
+! Machine parameters for slow extraction
+!-----------------------------------------------------------------------
+! TODO move to input file instead?
+! TODO tune
+! TODO chroma
+! TODO add sextupole parameters once clear...
+! TODO add bump knob once macro issue is cleared up
+
+
+!-----------------------------------------------------------------------
 ! Call files for correct initialization of SPS.
 ! TODO: 2015 files don't work due to conflict between tcpc and crystal1?
-!--------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 
 ! SPS beam configuration, energy and emittances.
 CALL, FILE = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx' ;
@@ -74,6 +85,7 @@ USE, SEQUENCE = SPS;
 !-----------------------------------------------------------------------
 ! Macro for making and saving a few TWISSes during setup
 !-----------------------------------------------------------------------
+! TODO Most twisses can probably just be deleted, instead of having this macro here
 
 make_twiss(twiss_dpp, twiss_label): MACRO = {
  SELECT, FLAG=TWISS, CLEAR;
@@ -332,7 +344,7 @@ get_spiral_step(x0_bump, px0_bump): MACRO = {
  zs_start2->x = x_zs;
  zs_start2->px = px_zs;
 
- SELECT, FLAG=TWISS, CLEAR;
+ SELECT, FLAG = TWISS, CLEAR;
  SELECT, FLAG = TWISS, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,PX,DX,DPX,
          APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
 
@@ -384,7 +396,7 @@ extr_bump_knob = 0.945; ! TODO: Is this the current value?
 
 USE, SEQUENCE = sps;
 EXEC, activate_bump(extr_bump_knob);
-
+EXIT;
 CALL, FILE = "makethin.madx";
 
 !CALL, FILE = "thin_tracking_phase_space_analysis.madx";
