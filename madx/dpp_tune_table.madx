@@ -1,0 +1,64 @@
+!-----------------------------------------------------------------------
+! Nominal setup for SPS slow extraction (at resonance)
+!
+! F.M. Velotti - francesco.maria.velotti@cern.ch
+! L.S. Stoel - linda.susanne.stoel@cern.ch
+!
+!-----------------------------------------------------------------------
+
+!-----------------------------------------------------------------------
+! Initialize nominal optics and bump macro
+! Will set OPTION, INFO, WARN, -ECHO, RBARC=FALSE;
+!-----------------------------------------------------------------------
+
+CALL, FILE = "../init/nominal.ini" ;
+CALL, FILE = "../cmd/setup_nominal.cmdx";
+
+SELECT, FLAG = TWISS, CLEAR;
+SELECT, FLAG = TWISS, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,PX,DX,DPX,
+        APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+
+
+!-----------------------------------------------------------------------
+! Create table and macro for resonance calculations
+! (Particles with dpp will be exactly on resonance for quadrupole
+!  strengths KQD,KQF1, for which the machine tune is qh0,qv0
+!-----------------------------------------------------------------------
+
+CREATE, TABLE = dpp_tune, COLUMN = dpp, KQD, KQF1, qh0, qv0;
+
+get_dpp_tune(dpp_value): MACRO = {
+ MATCH, SEQUENCE = sps, DELTAP = dpp;
+  VARY, NAME = KQD, STEP = 0.0001;
+  VARY, NAME = KQF1, STEP = 0.0001;
+  GLOBAL, Q1 = qh_init, Q2 = qv;
+  LMDIF, CALLS = 10, TOLERANCE = 1.0e-21;
+ ENDMATCH;
+
+ TWISS;
+
+ qh0 = TABLE(SUMM, Q1);
+ qv0 = TABLE(SUMM, Q2);
+};
+
+
+!-----------------------------------------------------------------------
+! Calculate spiral step for various bump settings
+!-----------------------------------------------------------------------
+tablen = 40
+dppstart = -1.5e-3
+dppend = 1.5e-3
+
+i = 0;
+WHILE(i < tablen){
+ dpp_inc = (dppend - dppstart)/(tablen - 1);
+ dpp_value = dppstart + i * dpp_inc;
+     
+ EXEC, get_dpp_tune(dpp_value);
+ FILL, TABLE = dpp_tune;
+ i = i + 1;
+};
+
+WRITE, TABLE = spiral_step, FILE = "../out/spiral_step.tfs";
+
+RETURN;

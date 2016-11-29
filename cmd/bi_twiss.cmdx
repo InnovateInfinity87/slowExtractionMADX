@@ -1,0 +1,18 @@
+!-----------------------------------------------------------------------
+! Get a TWISS at centre of monitors and instrumentation
+!-----------------------------------------------------------------------
+
+SELECT, FLAG=TWISS, CLEAR;
+
+SELECT, FLAG=TWISS, CLASS = MONITOR, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,
+        PX,DX,DPX,APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+SELECT, FLAG=TWISS, CLASS = HMONITOR, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,
+        PX,DX,DPX,APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+SELECT, FLAG=TWISS, CLASS = VMONITOR, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,
+        PX,DX,DPX,APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+SELECT, FLAG=TWISS, CLASS = INSTRUMENT, COLUMN = NAME,S,L,BETX,ALFX,MUX,
+        X,PX,DX,DPX,APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+
+TWISS, CENTRE, FILE ="../out/bi_twiss.tfs";
+
+RETURN;
