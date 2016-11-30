@@ -1,86 +1,99 @@
-!------------------------------------------------------------
-!Read input and create output tables
-!------------------------------------------------------------
+!-----------------------------------------------------------------------
+! Read input (initial particle coordinates)
+!-----------------------------------------------------------------------
 
-!readmytable,file="../in/initial_distribution_fat_halo_60.txt", table=initial_distribution; ! TODO file missing
-readmytable,file="../in/initial_distribution_parab.txt", table=initial_distribution; ! TODO file missing
-!readmytable,file="../in/dpp_dist_after_gym.tsv", table=initial_dpp; ! TODO file missing
-!readmytable,file="../in/initial_distribution_halo_chain10.txt", table=initial_distribution; ! TODO file missing
+!READMYTABLE, FILE = "../in/initial_distribution_fat_halo_60.txt", TABLE = initial_distribution; ! TODO file missing
+READMYTABLE, FILE = "../in/initial_distribution_parab.txt", TABLE = initial_distribution; ! TODO file missing
+!READMYTABLE, FILE = "../in/dpp_dist_after_gym.tsv", TABLE = initial_dpp; ! TODO file missing
+!READMYTABLE, FILE = "../in/initial_distribution_halo_chain10.txt", TABLE = initial_distribution; ! TODO file missing
 
+
+!-----------------------------------------------------------------------
+! Set "misalignments" to correctly describe critical apertures
+! TODO why not do this in the general one?
+! TODO does this really work for the sliced machine?
+!-----------------------------------------------------------------------
+
+!================================
+! Misa in beam dump ! TODO right?
+!================================
+SELECT, FLAG = ERROR, CLEAR;
 SELECT, FLAG= ERROR, PATTERN= "TIDH.11795";
 EALIGN, DX= -0.00425, DY= -0.00611;
-EPRINT;
 
+SELECT, FLAG = ERROR, CLEAR;
 SELECT, FLAG= ERROR, PATTERN= "TIDV.11892";
 EALIGN, DY= -0.00194;
 
 !================================
 ! Misa in Sextant 2
 !================================
+misa_knob = 0e-3; ! TODO: still useful??
 
-misa_knob = 0e-3;
-
+SELECT, FLAG = ERROR, CLEAR;
 SELECT, FLAG= ERROR, PATTERN= "MBB.21530";
 EALIGN, DX= 0.0 + misa_knob, DTHETA=798.7e-6;
 
+SELECT, FLAG = ERROR, CLEAR;
 SELECT, FLAG= ERROR, PATTERN= "MBB.21550";
 EALIGN, DX= 5.0e-3 + misa_knob, DTHETA=798.7e-6;
 
+SELECT, FLAG = ERROR, CLEAR;
 SELECT, FLAG= ERROR, PATTERN= "MBA.21570";
 EALIGN, DX= 10.0e-3 + misa_knob, DTHETA=159.7e-6;
 
+SELECT, FLAG = ERROR, CLEAR;
 SELECT, FLAG= ERROR, PATTERN= "MBA.21590";
 EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
 
+SELECT, FLAG = ERROR, CLEAR;
 SELECT, FLAG= ERROR, PATTERN= "VVSB.21601";
 EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
 
 
-tablemacro(xx,yy,zz): macro = {kv = table(xx,yy,zz);};
+!-----------------------------------------------------------------------
+! Create output table and tracking macro
+!-----------------------------------------------------------------------
 
-create, table = tune_var, column = giri, kqf1, kqf2, kqd;
+tablemacro(xx,yy,zz): MACRO = {kv = TABLE(xx,yy,zz);}; ! TODO: unused?
 
-tr$macro(turn): macro = {
-          
-          giri = turn;
-          fill, table = tune_var;
-                
-         };
+CREATE, TABLE = tune_var, COLUMN = giri, kqf1, kqf2, kqd;
+
+TR$MACRO(turn): MACRO = {
+ giri = turn;
+ FILL, TABLE = tune_var;
+};
 
 
-/******************************
-* Qh = 26.63
-******************************/
+!-----------------------------------------------------------------------
+! Set tune
+! TODO Check? Machine settings? Store this info elsewhere?
+!-----------------------------------------------------------------------
 
-kqf1_start_nom =        0.014638481 ;
-kqd_start_nom =     -0.01463347009 ;
+! Qh = 26.63
+kqf1_start_nom = 0.014638481 ;
+kqd_start_nom = -0.01463347009 ;
 
-/*****************************
-* Qh = 26.6764
-*****************************/
+! Qh = 26.6764
+kqf1_end_nom = 0.01465555361 ;
+kqd_end_nom = -0.0146366498 ;
 
-kqf1_end_nom =      0.01465555361 ;
-kqd_end_nom =      -0.0146366498 ;
+! Qh = 26.64
+kqf1_start = 0.01464216062 ;
+kqd_start = -0.01463415566 ;
 
-/*****************************
-* Qh = 26.64
-*****************************/
-kqf1_start =      0.01464216062 ;
-kqd_start =     -0.01463415566 ;
+! Qh = 26.6864
+kqf1_end = 0.01465923277 ;
+kqd_end = -0.01463733464 ;
 
-/******************************
-* 26.6864
-******************************/
+! Qh = 26.615
+kqf1_start = 0.01463296141 ;
+kqd_start = -0.01463244145 ;
 
-kqf1_end =      0.01465923277 ;
-kqd_end =     -0.01463733464 ;
 
-/******************************
-* 26.615
-******************************/
-
-kqf1_start =      0.01463296141 ;
-kqd_start =     -0.01463244145 ;
+!-----------------------------------------------------------------------
+! Do stuff? TODO understand and clean
+!-----------------------------------------------------------------------
 
 
 !kqfv1 = kqf1_start ;
