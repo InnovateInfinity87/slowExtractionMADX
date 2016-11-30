@@ -1,0 +1,129 @@
+!-----------------------------------------------------------------------
+! Thin particle tracking for slow extraction
+!
+! F.M. Velotti - francesco.maria.velotti@cern.ch
+!
+!-----------------------------------------------------------------------
+
+OPTION, INFO, WARN, -ECHO;
+
+!-----------------------------------------------------------------------
+! Initialization
+! (Will set OPTION, RBARC=FALSE;)
+!-----------------------------------------------------------------------
+
+CALL, FILE = "../init/nominal.ini" ;
+CALL, FILE = "../cmd/setup_nominal.cmdx";
+CALL, FILE = "../cmd/makethin.cmdx";
+CALL, FILE = "../init/track_nom.ini";
+
+READMYTABLE, FILE = "../input/initial_distribution_gauss.txt",
+             TABLE = initial_distribution;
+
+!-----------------------------------------------------------------------
+! Set "misalignments" to correctly describe critical apertures
+! TODO why not do this in the general one?
+! TODO does this really work for the sliced machine?
+!-----------------------------------------------------------------------
+
+!================================
+! Misa in beam dump ! TODO right?
+!================================
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "TIDH.11795";
+EALIGN, DX= -0.00425, DY= -0.00611;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "TIDV.11892";
+EALIGN, DY= -0.00194;
+
+!================================
+! Misa in Sextant 2
+!================================
+misa_knob = 0e-3; ! TODO: still useful??
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "MBB.21530";
+EALIGN, DX= 0.0 + misa_knob, DTHETA=798.7e-6;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "MBB.21550";
+EALIGN, DX= 5.0e-3 + misa_knob, DTHETA=798.7e-6;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "MBA.21570";
+EALIGN, DX= 10.0e-3 + misa_knob, DTHETA=159.7e-6;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "MBA.21590";
+EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+
+SELECT, FLAG = ERROR, CLEAR;
+SELECT, FLAG= ERROR, PATTERN= "VVSB.21601";
+EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+
+
+!-----------------------------------------------------------------------
+! Create output table and initialization+tracking macros
+!-----------------------------------------------------------------------
+
+CREATE, TABLE = tune_var, COLUMN = giri, kqf1, kqf2, kqd;
+
+TR$MACRO(turn): MACRO = {
+ giri = turn;
+ FILL, TABLE = tune_var;
+};
+
+ini_track_macro(zz): MACRO = {
+ x0 =  TABLE(initial_distribution, X, zz);
+ px0 = TABLE(initial_distribution, PX, zz);
+ y0 =  TABLE(initial_distribution, Y, zz);
+ py0 = TABLE(initial_distribution, PY, zz);
+ t0  = TABLE(initial_distribution, T, zz);
+ pt0 = TABLE(initial_distribution, PT, zz);
+ START, X = x0, PX = px0, Y = y0, PY = py0, T = t0, PT = pt0;
+};
+
+
+!-----------------------------------------------------------------------
+! Define the varying tune during tracking
+! TODO sure this is correct?
+!-----------------------------------------------------------------------
+
+inc_f = (kqf1_start - kqf1_end) / (1 - Nturns_full);
+inc_d = (kqd_start - kqd_end) / (1 - Nturns_full);
+
+kqf1 := kqf1_start + inc_f * (tr$turni-1 + Nturns_start) ;
+kqd := kqd_start + inc_d * (tr$turni-1 + Nturns_start) ;
+
+
+!-----------------------------------------------------------------------
+! Start actual tracking
+!-----------------------------------------------------------------------
+
+OPTION, -INFO, -WARN;! otherwise you get warnings;
+! TODO get new version with modern aperture definition
+
+TRACK, DUMP, ONETABLE=TRUE, ONEPASS, APERTURE,  RECLOSS, 
+       UPDATE, file = "../out/track_out_example_";
+
+ j = 1;
+ WHILE (j <= Nparticles) {
+  EXEC, ini_track_macro($j);
+  j = j+1;
+ };
+
+! OBSERVE, PLACE = CRYSTAL_lss4.UA9;
+! OBSERVE, PLACE = mbb.21530;
+ OBSERVE, PLACE = ap.up.zs21633;
+
+ RUN, TURNS = Nturns_sim, FFILE = 1;
+ENDTRACK;
+
+OPTION, INFO, WARN;
+
+
+!-----------------------------------------------------------------------
+! Save results
+!-----------------------------------------------------------------------
+WRITE, TABLE = trackloss, FILE = "../out/losses_example.tfs"; ! TODO file access

@@ -1,36 +1,22 @@
-/******************************************************
- * MATCH2:   DQ1=-1*QH & DQ2=0.*QV
- * for SFTPRO at flat top
- ******************************************************/
+!-----------------------------------------------------------------------
+! Match chroma
+!-----------------------------------------------------------------------
 
-qh_int = table(summ, q1);
-qv_int = table(summ, q2);
-value, KlSDA,klSDB,KlSFA,KlSFB;
+! Settings for SPS linear model
+kLSFC := kLSFA;
 
-!KlSDA = -0.1381499551  ;
-!KlSDB = -0.1306869357  ;
-!KlSFA = 0.0356031813   ;
-!KlSFB = 0.020500673    ;
+! Match required chroma
+! (Using tune to solve underconstrained system)
+MATCH, sequence=SPS;
+ VARY, name=KlSDA, step=0.0001;
+ VARY, name=KlSDB, step=0.0001;
+ VARY, name=KlSFA, step=0.0001;
+ VARY, name=KlSFB, step=0.0001;
 
-KlSDA = -0.189  ;
-KlSDB = -0.1653  ;
-KlSFA = 0.0395   ;
-KlSFB = 0.0276    ;
+ GLOBAL, sequence=SPS, DQ1= dqh_norm * qh;
+ GLOBAL, sequence=SPS, DQ2=  dqv_norm * qv;
+ GLOBAL, sequence=SPS, Q1= qh;
+ GLOBAL, sequence=SPS, Q2= qv;
 
-match, sequence=SPS;
-
-VARY, name=KlSDA, step=0.0001;
-VARY, name=KlSDB, step=0.0001;
-VARY, name=KlSFA, step=0.0001;
-VARY, name=KlSFB, step=0.0001;
-
-Global, sequence=SPS, DQ1= -0.77 * qh_int;
-Global, sequence=SPS, DQ2=  0.465 * qv_int;
-Global, sequence=SPS, Q1= qh_int;
-Global, sequence=SPS, Q2= qv_int;
-
-!Global, sequence=SPS, DDQ1=0.0;
-!Global, sequence=SPS, DDQ2=0.0;
-
-Lmdif, calls=500, tolerance=1e-6;
-Endmatch;
+ LMDIF, CALLS = 500, TOLERANCE = 1e-6;
+ENDMATCH;
