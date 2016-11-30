@@ -4,6 +4,7 @@
 ! F.M. Velotti - francesco.maria.velotti@cern.ch
 !
 !-----------------------------------------------------------------------
+
 OPTION, INFO, WARN, -ECHO ;
 OPTION, RBARC=FALSE; ! The length of a rectangular magnet is the dist-
                      ! ance between the polefaces and not the arc length
@@ -35,6 +36,7 @@ CALL, FILE = '../aperture/aperturedb_3.dbx' ;
 
 ! Strength definition files for SPS: *.str & elements.str.
 CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
+OPTION, -ECHO;
 CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
 
 ! TODO dispacements of LSS1 quads?? Needs bumpers or no? 
