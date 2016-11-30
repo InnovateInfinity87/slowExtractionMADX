@@ -1,187 +1,180 @@
-!--------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 ! MADX files for SPS slow extraction 
 !
 ! F.M. Velotti - francesco.maria.velotti@cern.ch
 !
-!--------------------------------------------------------------------------
+!-----------------------------------------------------------------------
+! TODO: Lots of SAVEBETAs seem unnecessary, are they used?
+! TODO: Save sequence and errors at the end to avoid doing this often?
 
+OPTION, INFO, WARN, -ECHO ;
+OPTION, RBARC=FALSE; ! The length of a rectangular magnet is the dist-
+                     ! ance between the polefaces and not the arc length
 
- option, -echo;
- option, RBARC=FALSE;  ! the length of a rectangular magnet
-                       ! is the distance between the polefaces
-                       ! and not the arc length
-!assign, ECHO=ECHO.PRT;
+!ASSIGN, ECHO="../out/echo.prt";
+
+yes = 1;
+no = 0;
+
+! TODO : Which of these switches are relevant?
 
 ! if only quads and bends have to be considered -> linear = 1
 ! else -> linear = 0
 
-
-yes := 1;
-no := 0;
-
-
 linear = no;
-
 match_extr_bump = no;
-
 match_corr_bump = no;
-
 correction = no;
-
 extraction = yes;
-
 nominal = yes;
 
-!---------------------------------------------------------------
-!         SPECIFY THE SPS BEAM CONFIGURATION, ENERGY and EMITTANCES
-! 
-!---------------------------------------------------------------
 
-call, file = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx';
-!--------------------------------------------------------------------------
-! call the element definition file for SPS
-!--------------------------------------------------------------------------
- call, file = '/afs/cern.ch/eng/sps/2014/elements/sps.ele';
-
-
-!--------------------------------------------------------------------------
-! call the aperture definition file for SPS. These are groups of elements
-!--------------------------------------------------------------------------
- call, file = '/afs/cern.ch/eng/sps/2014
-               /aperture/aperturedb_1.dbx';
-
-!--------------------------------------------------------------------------
-! aperture of QF1, QF2 and QD
-!--------------------------------------------------------------------------
- call, file = '/afs/cern.ch/eng/sps/2014
-               /aperture/aperturedb_2.dbx';
- option, echo;
+!-----------------------------------------------------------------------
+! Machine parameters for slow extraction
+!-----------------------------------------------------------------------
+! TODO move to input file instead?
+! TODO tune
+! TODO chroma
+! TODO add sextupole parameters once clear...
+! TODO add bump knob once macro issue is cleared up
 
 
-!--------------------------------------------------------------------------
-! call the sequence definition file for SPS
-!--------------------------------------------------------------------------
- call, file = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq';
+!-----------------------------------------------------------------------
+! Call files for correct initialization of SPS.
+! TODO: 2015 files don't work due to conflict between tcpc and crystal1?
+!-----------------------------------------------------------------------
 
+! SPS beam configuration, energy and emittances.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx' ;
 
-!--------------------------------------------------------------------------
-! aperture of individual elements
-!--------------------------------------------------------------------------
- call, file = '../aperture/aperturedb_3.dbx';
+! Element definition file for SPS
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/elements/sps.ele' ;
 
+! Aperture definition file for SPS. These are groups of elements.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_1.dbx' ;
 
-!--------------------------------------------------------------------------
-! call the two strength definition files for SPS: *.str & elements.str
-!--------------------------------------------------------------------------
+! Aperture of QF1, QF2 and QD.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_2.dbx' ;
 
+! Sequence definition file for SPS.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq' ;
 
-call, file = '/afs/cern.ch/eng/sps/2014
-              /strength/ft_noqs_ext.str';
+! Aperture of some individual elements.
+! (Local file because some studies need changes)
+CALL, FILE = '../aperture/aperturedb_3.dbx' ;
 
- call, file = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
+! Strength definition files for SPS: *.str & elements.str.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
 
-
+! TODO: Is this ever used for se?
+! BTW, this is not what the linear flag says it's for...
 if (linear == yes)
 {
-    kLSDA  :=  0;
-    kLSDB  :=  0;
-    kLSFA  :=  0;
-    kLSFB  :=  0;
-    kLSFC  :=  kLSFA;
+    kLSDA := 0;
+    kLSDB := 0;
+    kLSFA := 0;
+    kLSFB := 0;
+    kLSFC := kLSFA;
+};
+
+! Load the SPS sequence.
+USE, SEQUENCE = SPS;
+
+
+!-----------------------------------------------------------------------
+! Macro for making and saving a few TWISSes during setup
+!-----------------------------------------------------------------------
+! TODO Most twisses can probably just be deleted, instead of having this macro here
+
+make_twiss(twiss_dpp, twiss_label): MACRO = {
+ SELECT, FLAG=TWISS, CLEAR;
+ SELECT, FLAG = TWISS, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,PX,DX,DPX,
+         APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+ TWISS, DELTAP = twiss_dpp, FILE = "../out/twiss_twiss_label.tfs";
 };
 
 
-
-
-!------------------------------------------------------------------------
-!install markers and isolate part of the SPS to simulate extractiont trough the TT20 
-!------------------------------------------------------------------------
-
-
-USE, period=SPS, range=#S/#E;
+!-----------------------------------------------------------------------
+! Install elements relevant to the extraction through TT20
+! TODO: actually seems like LSS6 extraction, remove?
+!-----------------------------------------------------------------------
 /*
-QDA.619.coil       : QUADRUPOLE  , L := 3.791;
-SEQEDIT,SEQUENCE=SPS;
-INSTALL, ELEMENT=EXTRPT_6,CLASS=marker, AT=0.00457 + (3.791 / 2), FROM = QDA.61910;
-flatten;
+QDA.619.coil: QUADRUPOLE, L := 3.791;
+
+SEQEDIT, SEQUENCE=SPS;
+ INSTALL, ELEMENT=EXTRPT_6,CLASS=marker, AT=0.00457 + (3.791 / 2),
+          FROM = QDA.61910;
+ FLATTEN;
 ENDEDIT;
+USE, SEQUENCE = sps;
 */
 
-seqedit, sequence = sps;
-INSTALL, ELEMENT = TCSM.new, CLASS=marker, AT=5158.5722, FROM = SPS$START;
-flatten;
-endedit;
+!-----------------------------------------------------------------------
+! Install markers relevant to the crystal MDs
+! (Crystals + new TCSM)
+! TODO: Should new TCSM go into sps repository? Or does it change often? (Also, what is the tcsm?)
+!-----------------------------------------------------------------------
 
-s_lss4_crystal = 4031;
+crystal1.ua9: MARKER;
+crystal2.ua9: MARKER;
+crystal3.ua9: MARKER;
+crystal4.ua9: MARKER;
+crystal5.ua9: MARKER;
+crystal_lss4.ua9: MARKER;
 
-CRYSTAL1.UA9: MARKER;
-CRYSTAL2.UA9: MARKER;
-CRYSTAL3.UA9: MARKER;
-CRYSTAL4.UA9: MARKER;
-CRYSTAL5.UA9: MARKER;
-CRYSTAL_lss4.UA9: MARKER;
+s_lss4_crystal = 4031; ! TODO: Why is this a var?
 
-!------------------------------------------------------------------------
-!install markers and isolate part of the SPS to simulate extractiont trough the TT20 
-!------------------------------------------------------------------------
-USE, period=SPS, range=#S/#E;
-
-SEQEDIT,SEQUENCE=SPS;
-!remove, element=TCSM.51934;
-remove, element = bshv.51795;
-remove, element = tecs.51797;
-remove, element = tecs.51799;
-!============================================================================================
-install, element= CRYSTAL1.UA9, at := 5178.1685;
-install, element= CRYSTAL_lss4.UA9, at := s_lss4_crystal;
-install, element= CRYSTAL2.UA9, at := 5179.4295;
-install, element= CRYSTAL3.UA9, at := 5179.9245;
-install, element= CRYSTAL4.UA9, at := 5180.8295;
-install, element= CRYSTAL5.UA9, at := 5181.3245;
-!============================================================================================
-flatten;
+! TODO: syntax: CLASS= ?
+! TODO: removes bshv and tecs related to tcsm?
+SEQEDIT, SEQUENCE = sps;
+! REMOVE, ELEMENT = TCSM.51934;
+ REMOVE, ELEMENT = bshv.51795;
+ REMOVE, ELEMENT = tecs.51797;
+ REMOVE, ELEMENT = tecs.51799;
+ INSTALL, ELEMENT = tcsm.new, CLASS = MARKER, AT = 5158.5722,
+          FROM = SPS$START;
+ INSTALL, ELEMENT = crystal1.ua9, AT = 5178.1685;
+ INSTALL, ELEMENT = crystal_lss4.ua9, AT = s_lss4_crystal;
+ INSTALL, ELEMENT = crystal2.ua9, AT = 5179.4295;
+ INSTALL, ELEMENT = crystal3.ua9, AT = 5179.9245;
+ INSTALL, ELEMENT = crystal4.ua9, AT = 5180.8295;
+ INSTALL, ELEMENT = crystal5.ua9, AT = 5181.3245;
+ FLATTEN;
 ENDEDIT;
 
+USE, SEQUENCE = SPS;
 
-USE, sequence=SPS, range=#s/#e;
 
-option, -echo;
-
-!--------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 ! Match tune and chroma
-!--------------------------------------------------------------------------
-use, period=sps;
+!-----------------------------------------------------------------------
 
-call, file = '../cmd/matchtune.cmdx';
-call, file = '../cmd/matchchroma.cmdx';
+CALL, FILE = '../cmd/matchtune.cmdx';
+CALL, FILE = '../cmd/matchchroma.cmdx';
 
-!call, file = "lss1_q171819_displacement.madx";  ! TODO file missing?
-option, -echo;
+!CALL, FILE = "lss1_q171819_displacement.madx";  ! TODO file missing?
 
-select, flag=twiss, range=#E,column=name,s,betx,alfx,mux,x,px,dx,dpx,bety,alfy,muy,y,py,dy,dpy;
-TWISS, DELTAP=0.0;
-!savebeta,label=start, place=SPS$START;
-write, table=twiss, file="../out/twiss_nominal_se.tfs";
+!SAVEBETA, LABEL = start, PLACE=SPS$START; ! TODO: relevance?
+EXEC, make_twiss(0.0, nominal_se);
 
 
-!==========================================================
-! Slow extraction sextupoles and bumpers values
-!==========================================================
+!-----------------------------------------------------------------------
+! Set extraction sextupoles
+!-----------------------------------------------------------------------
 
-! Values in the last SFT_LONG cycle in trim editor
-
+! Values in the last SFT_LONG cycle in trim editor ! TODO: ==SFTPRO2014?
 extr_sext = -0.11992;
 
 ! Value from 2010 SFT
-
 !extr_sext = -0.107928 * 0.9 ;
-sex_knob_value = 1;
-knob_ext_sext = sex_knob_value;
 
-klse10602 := extr_sext * knob_ext_sext;
-klse22402 := extr_sext * knob_ext_sext;
-klse40602 := extr_sext * knob_ext_sext;
-klse52402 := extr_sext * knob_ext_sext;
+knob_extr_sext = 1;
+
+klse10602 := extr_sext * knob_extr_sext;
+klse22402 := extr_sext * knob_extr_sext;
+klse40602 := extr_sext * knob_extr_sext;
+klse52402 := extr_sext * knob_extr_sext;
 
 
 !extr_sext_old = -0.168605;
@@ -190,54 +183,18 @@ klse52402 := extr_sext * knob_ext_sext;
 !klsen42402 := -1 * extr_sext_old ;
 
 
-!knob = 0.86; !-> 20 mm Z_s using Brennan's values
-!knob = 0.88; !-> 20 mm Z_s using my values 
+!-----------------------------------------------------------------------
+! Set extraction bump
+!-----------------------------------------------------------------------
 
-!kMPLH21431 = 4.9e-4 * knob;
-!kMPLH21995 = 2.503e-4 * knob;
-!kMPLH22195 = -3.5585e-4 * knob;
-!kMPNH21732 = 3.3309e-4 * knob;
-!kMPSH21202 = -7.6765e-5 * knob;
+!knob_extr_bump = 0.86; !-> 20 mm Z_s using Brennan's values
+!knob_extr_bump = 0.88; !-> 20 mm Z_s using Francesco's values 
 
-
-start_from_zs() : macro = {
-
-    seqedit, sequence = sps;
-    extract, sequence = sps, from = begi.10010, to = end.10010, newname=sps2;
-    endedit;
-    use, sequence = sps2;
-
-
-    seqedit, sequence = sps2;
-     flatten;
-    cycle, start = AP.UP.ZS21633;
-    endedit;
-
-    use, period = SPS2;
-
-    MPSH_rb.21202: RBEND, L = .714, angle=0.0;
-    MPLH_rb.21431: RBEND, L = 2.06, angle=0.0;
-    MPNH_rb.21732: RBEND, L = 2.04, angle=0.0;
-    MPLH_rb.21995: RBEND, L = 2.06, angle=0.0;
-    MPLH_rb.22195: RBEND, L = 2.06, angle=0.0;
-
-    seqedit, sequence = sps2;
-
-    replace, element = MPSH.21202, by = MPSH_rb.21202;
-    replace, element = MPLH.21431, by = MPLH_rb.21431;
-    replace, element = MPNH.21732, by = MPNH_rb.21732;
-    replace, element = MPLH.21995, by = MPLH_rb.21995;
-    replace, element = MPLH.22195, by = MPLH_rb.22195;
-
-    flatten;
-    endedit;
-
-};
-
-exec, start_from_zs();
-
-
-use, period = SPS;
+!kMPLH21431 = 4.9e-4 * knob_extr_bump;
+!kMPLH21995 = 2.503e-4 * knob_extr_bump;
+!kMPLH22195 = -3.5585e-4 * knob_extr_bump;
+!kMPNH21732 = 3.3309e-4 * knob_extr_bump;
+!kMPSH21202 = -7.6765e-5 * knob_extr_bump;
 
 MPSH_rb.21202: RBEND, L = .714, angle=0.0;
 MPLH_rb.21431: RBEND, L = 2.06, angle=0.0;
@@ -245,196 +202,205 @@ MPNH_rb.21732: RBEND, L = 2.04, angle=0.0;
 MPLH_rb.21995: RBEND, L = 2.06, angle=0.0;
 MPLH_rb.22195: RBEND, L = 2.06, angle=0.0;
 
-seqedit, sequence = sps;
+SEQEDIT, SEQUENCE = sps;
+ REPLACE, ELEMENT = MPSH.21202, BY = MPSH_rb.21202;
+ REPLACE, ELEMENT = MPLH.21431, BY = MPLH_rb.21431;
+ REPLACE, ELEMENT = MPNH.21732, BY = MPNH_rb.21732;
+ REPLACE, ELEMENT = MPLH.21995, BY = MPLH_rb.21995;
+ REPLACE, ELEMENT = MPLH.22195, BY = MPLH_rb.22195;
+ FLATTEN;
+ENDEDIT;
+USE, SEQUENCE = sps;
 
-replace, element = MPSH.21202, by = MPSH_rb.21202;
-replace, element = MPLH.21431, by = MPLH_rb.21431;
-replace, element = MPNH.21732, by = MPNH_rb.21732;
-replace, element = MPLH.21995, by = MPLH_rb.21995;
-replace, element = MPLH.22195, by = MPLH_rb.22195;
+! Extraction bump for SE North - no Q-split
+! TODO!! macro prohibits using a variable to set the bump (filename...)
+       ! Does filename need to be included or is manual twiss ok?
+activate_bump(knob_value): MACRO = {
+ SELECT, FLAG = ERROR, RANGE = MPSH_rb.21202;
+ EFCOMP, ORDER = 0, DKN = 7.6765E-5 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
 
-flatten;
-endedit;
+ SELECT, FLAG = ERROR, RANGE = MPLH_rb.21431;
+ EFCOMP, ORDER = 0, DKN = -0.49E-3 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
 
-USE, period=SPS, range=#S/#E;    ! Calculation for SPS ring
+ SELECT, FLAG = ERROR, RANGE = MPNH_rb.21732;
+ EFCOMP, ORDER = 0, DKN = -0.33309E-3 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
 
-activate_bump(knob_value) : macro = {
-    
-    value, knob_value;
-     ! SE North - no Q-split
-    !/******
-     select, flag=error, range=MPSH_rb.21202;
-     efcomp, order:=0, dkn:=7.6765e-5 * knob_value;
-     EPRINT;
-     select, flag=error, clear;
-     select, flag=error, range=MPLH_rb.21431;
-     efcomp, order:=0, dkn:=-0.49e-3 * knob_value;
-     EPRINT;
-     select, flag=error, clear;
-     select, flag=error, range=MPNH_rb.21732;
-     efcomp, order:=0, dkn:=-0.33309e-3 * knob_value;
-     EPRINT;
-     select, flag=error, clear;
-     select, flag=error, range=MPLH_rb.21995;
-     efcomp, order:=0, dkn:=-0.2503e-3 * knob_value;
-     EPRINT;
-     select, flag=error, clear;
-     select, flag=error, range=MPLH_rb.22195;
-     efcomp, order:=0, dkn:=.35585e-3 * knob_value;
-     EPRINT;
-     select, flag=error, clear;
+ SELECT, FLAG = ERROR, RANGE = MPLH_rb.21995;
+ EFCOMP, ORDER = 0, DKN = -0.2503e-3 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
 
-    select, flag=twiss, clear;
-    select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-    TWISS, DELTAP=0.0;
-    write, table=twiss, file="../out/twiss_before_extr_knob_value.tfs";
+ SELECT, FLAG = ERROR, RANGE = MPLH_rb.22195;
+ EFCOMP, ORDER = 0, DKN = 0.35585e-3 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
 
+ SELECT, FLAG = TWISS, CLEAR;
+ SELECT, FLAG = TWISS, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,PX,DX,DPX,
+         APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+ TWISS, DELTAP = 0.0, FILE = "../out/twiss_before_extr_knob_value.tfs";
 };
-!********/
 
-exec, activate_bump(1);
-call, file = '../cmd/matchchroma.cmdx';
-call, file = '../cmd/matchtune.cmdx';
+! Rematch the bumped sequence
+EXEC, activate_bump(1);
+CALL, FILE = '../cmd/matchchroma.cmdx';
+CALL, FILE = '../cmd/matchtune.cmdx';
 
-select, flag=twiss, clear;
-savebeta, label = zs_start, place = ap.up.zs21633;
-select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-TWISS, DELTAP=0.0;
-write, table=twiss, file="../out/twiss_before_extr_normal.tfs";
+SAVEBETA, LABEL = zs_start, PLACE = ap.up.zs21633;
+EXEC, make_twiss(0.0, before_extr_normal);
 
+
+!-----------------------------------------------------------------------
+! Create sequence sps2, copy of sps, but starts at the ZS
+! CAREFULL: The bump macro has to be EXECed after every USE of sps/sps2
+! TODO: Does changing element strength affect both?
+!-----------------------------------------------------------------------
+! TODO: Why make this a macro?
+start_from_zs: MACRO = {
+ SEQEDIT, SEQUENCE = sps;
+  EXTRACT, SEQUENCE = sps, FROM = BEGI.10010, TO = END.10010,
+           NEWNAME = sps2;
+ ENDEDIT;
+ USE, SEQUENCE = sps2;
+
+ SEQEDIT, SEQUENCE = sps2;
+ FLATTEN;
+ CYCLE, START = AP.UP.ZS21633;
+ FLATTEN;
+ ENDEDIT;
+ USE, SEQUENCE = sps2;
+};
+EXEC, START_FROM_ZS;
+
+USE, SEQUENCE = sps;
+EXEC, activate_bump(1);
+
+
+!-----------------------------------------------------------------------
+! Rematch tune for initial momentum instead of nominal momentum
+! TODO: Is my comment correct? Matching at nominal mom different tune...
+!-----------------------------------------------------------------------
 
 dpp_extreme = -1.5e-3;
 
-qh = table(summ, q1) - dpp_extreme * table(summ, dq1);
-qv = table(summ, q2) ;
+! TODO: Is TWISS with CHROM flag needed or is DQ1 accurate as is?
+qh_init = TABLE(SUMM, Q1) - dpp_extreme * TABLE(SUMM, DQ1);
+qv = TABLE(SUMM, Q2);
 
-value, qh;
+MATCH, SEQUENCE = sps;
+ VARY, NAME = KQD, STEP = 0.0001;
+ VARY, NAME = KQF1, STEP = 0.0001;
+ GLOBAL, Q1 = qh_init, Q2 = qv;
+ LMDIF, CALLS = 10, TOLERANCE = 1.0e-21;
+ENDMATCH;
 
-match, sequence=SPS;
-Global, Q1=qh, Q2= qv;
-VARY, name=KQD, step=0.0001;
-VARY, name=KQF1, step=0.0001;
-Lmdif,calls=10,tolerance=1.0e-21;
-Endmatch;
+SAVEBETA, LABEL = zs_start, PLACE = ap.up.zs21633;
+EXEC, make_twiss(0.0, test1);
 
-select, flag=twiss, clear;
-savebeta, label = zs_start, place = ap.up.zs21633;
-select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-TWISS, DELTAP=0.0;
-write, table=twiss, file="../out/twiss_test_twiss1.tfs";
+SAVEBETA, LABEL = zs_start, PLACE = ap.up.zs21633;
+EXEC, make_twiss(dpp_extreme, test12);
 
-select, flag=twiss, clear;
-savebeta, label = zs_start, place = ap.up.zs21633;
-select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-TWISS, DELTAP=dpp_extreme;
-write, table=twiss, file="../out/twiss_test_twiss12.tfs";
-stop;
+USE, SEQUENCE = sps2;
+EXEC, activate_bump(1);
+
+SAVEBETA, LABEL = zs_start2, PLACE = ap.up.zs21633;
+EXEC, make_twiss(0.0, from_zs);
 
 
-use, sequence = sps2;
-exec, activate_bump(1);
-
-select, flag=twiss, clear;
-savebeta, label = zs_start2, place = ap.up.zs21633;
-select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-TWISS, DELTAP=0.0;
-write, table=twiss, file="../out/twiss_from_zs.tfs";
-
+!-----------------------------------------------------------------------
+! Get a TWISS at cenre of monitors and instrumentation
+!-----------------------------------------------------------------------
 /**********
-select, flag=twiss, clear;
+SELECT, FLAG=TWISS, CLEAR;
 
-select, flag=twiss, class = monitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-select, flag=twiss, class = hmonitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-select, flag=twiss, class = vmonitor, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-select, flag=twiss, class = instrument, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-
-TWISS, DELTAP=0.0, centre;
-write, table=twiss, file="../out/twiss_centre_before_extr.tfs";
+SELECT, FLAG=TWISS, CLASS = MONITOR, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,
+        PX,DX,DPX,APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+SELECT, FLAG=TWISS, CLASS = HMONITOR, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,
+        PX,DX,DPX,APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+SELECT, FLAG=TWISS, CLASS = VMONITOR, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,
+        PX,DX,DPX,APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+SELECT, FLAG=TWISS, CLASS = INSTRUMENT, COLUMN = NAME,S,L,BETX,ALFX,MUX,
+        X,PX,DX,DPX,APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
+TWISS, DELTAP = 0.0, CENTRE, FILE =
+       "../out/twiss_centre_before_extr.tfs";
 **************/
 
-create, table = spiral_step, column = knob_value, delta_x, delta_px, x_zs, px_zs,  final_x, final_px;
 
-get_spiral_step(x0_bump, px0_bump) : macro = {
+!-----------------------------------------------------------------------
+! Calculate the spiral step (with SPS2 sequence!)
+! TODO: Do you want to do this with tune matched off-momentum?
+!-----------------------------------------------------------------------
 
-    m = -0.02025305;
+CREATE, TABLE = spiral_step, COLUMN = knob_value, delta_x, delta_px,
+        x_zs, px_zs,  final_x, final_px;
 
-    x_zs = 68e-3;
-    px_zs = m * (x_zs - x0_bump) + px0_bump;
+get_spiral_step(x0_bump, px0_bump): MACRO = {
+ m = -0.02025305; ! TODO: Slope of separatrix in phase space, magic?
 
-    zs_start2->x=x_zs;
-    zs_start2->px=px_zs;
+ x_zs = 68e-3;
+ px_zs = m * (x_zs - x0_bump) + px0_bump;
 
-    select, flag=twiss, clear;
-    savebeta, label=turn1, place=SPS2AP.UP.ZS21633_P_;
-    select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-    TWISS, DELTAP=0.0, beta0=zs_start2;
-    write, table=twiss, file="../out/twiss_bump_1_turn.tfs";
+ zs_start2->x = x_zs;
+ zs_start2->px = px_zs;
 
-    select, flag=twiss, clear;
-    savebeta, label=turn2, place=SPS2AP.UP.ZS21633_P_;
-    select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-    TWISS, DELTAP=0.0, beta0=turn1;
-    write, table=twiss, file="../out/twiss_bump_2_turn.tfs";
+ SELECT, FLAG = TWISS, CLEAR;
+ SELECT, FLAG = TWISS, COLUMN = NAME,S,L,BETX,ALFX,MUX,X,PX,DX,DPX,
+         APER_1,BETY,ALFY,MUY,Y,PY,DY,DPY,APER_2,K2L;
 
-    select, flag=twiss, clear;
-    savebeta, label=turn3, place=SPS2AP.UP.ZS21633_P_;
-    select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy,k2l;
-    TWISS, DELTAP=0.0, beta0=turn2;
-    write, table=twiss, file="../out/twiss_bump_3_turn.tfs";
+ SAVEBETA, LABEL = turn1, PLACE = SPS2AP.UP.ZS21633_P_;
+ TWISS, DELTAP = 0.0, beta0 = zs_start2;
 
-    delta_x = table(twiss, SPS2AP.UP.ZS21633_P_, x) - x_zs;
-    delta_px = table(twiss, SPS2AP.UP.ZS21633_P_, px) - px_zs;
+ SAVEBETA, LABEL = turn2, PLACE = SPS2AP.UP.ZS21633_P_;
+ TWISS, DELTAP = 0.0, beta0 = turn1;
 
-    final_x = table(twiss, SPS2AP.UP.ZS21633_P_, x);
-    final_px = table(twiss, SPS2AP.UP.ZS21633_P_, px);
+ SAVEBETA, LABEL = turn3, PLACE = SPS2AP.UP.ZS21633_P_;
+ TWISS, DELTAP = 0.0, beta0 = turn2;
 
+ delta_x = TABLE(TWISS, SPS2AP.UP.ZS21633_P_, X) - x_zs;
+ delta_px = TABLE(TWISS, SPS2AP.UP.ZS21633_P_, PX) - px_zs;
+
+ final_x = TABLE(TWISS, SPS2AP.UP.ZS21633_P_, X);
+ final_px = TABLE(TWISS, SPS2AP.UP.ZS21633_P_, PX);
 };
 
 /*******************
 i = 1;
+WHILE(i <= 40){
+ !knob_value = i * 10.1053e-3 + 9.47894e-1;
+ knob_inc = ((0.8 - 1.2) / (1 - 40));
+ knob_value = 0.8 + (i-1) * knob_inc;
 
-while(i <= 40){
+ USE, SEQUENCE = sps2;
+ EXEC, activate_bump(knob_value); ! TODO: Should probalby also rematch tune (Tune is set up for dpp_extreme and bump=1 atm)
 
-    use, sequence = sps2;
-    m_knob = ((0.8 - 1.2) / (1 - 40));
-    n_knob = 1.2 - (m_knob * 40);
-
-    !knob_value = i * 10.1053e-3 + 9.47894e-1;
-    knob_value = i * m_knob + n_knob;
-
-    value, knob_value;
-
-    exec, activate_bump(knob_value);
-    
-    x0 = table(twiss, ap.up.zs21633, x);
-    px0 = table(twiss, ap.up.zs21633, px);
+ TWISS, DELTAP = 0.0; !
+ x0 = TABLE(TWISS, AP.UP.ZS21633, X);
+ px0 = TABLE(TWISS, AP.UP.ZS21633, PX);
      
-    exec, get_spiral_step($x0, $px0);
-    
-    fill, table = spiral_step;
-    i = i + 1;
-
+ EXEC, get_spiral_step(x0, px0);
+ FILL, TABLE = spiral_step;
+ i = i + 1;
 };
 
-write, table = spiral_step, file = "../out/spiral_step.tfs";
+WRITE, TABLE = spiral_step, FILE = "../out/spiral_step.tfs";
 **********************/
 
-! Extraction bump LSS2
 
-knob := extr_bump_knob ;
-extr_bump_knob = 0.945;
-!extr_bump_knob = 1.;
+!-----------------------------------------------------------------------
+! Perform tracking studies
+! (Carefull, called files will change the sequence!)
+!-----------------------------------------------------------------------
 
-use, sequence = sps;
-exec, activate_bump(extr_bump_knob);
+extr_bump_knob = 0.945; ! TODO: Is this the current value?
 
-call, file = "makethin.madx";
+USE, SEQUENCE = sps;
+EXEC, activate_bump(extr_bump_knob);
+EXIT;
+CALL, FILE = "makethin.madx";
 
+!CALL, FILE = "thin_tracking_phase_space_analysis.madx";
+!CALL, FILE = "thin_tracking.madx";
+CALL, FILE = "thin_tracking_sample.madx";
 
-!call, file = "thin_tracking_phase_space_analysis.madx";
-
-!call, file = "thin_tracking.madx";
-
-call, file = "thin_tracking_sample.madx";
-
-stop;
+STOP;
