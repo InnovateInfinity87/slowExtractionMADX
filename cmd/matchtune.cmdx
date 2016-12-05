@@ -9,8 +9,4 @@ MATCH, SEQUENCE = sps ;
  LMDIF, CALLS = 100, TOLERANCE = 1.0E-21 ;
 ENDMATCH ;
 
-<<<<<<< HEAD
 RETURN;
-=======
-RETURN;
->>>>>>> script-flexibility
