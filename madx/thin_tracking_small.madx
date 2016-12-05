@@ -17,7 +17,7 @@ CALL, FILE = "../cmd/setup_nominal.cmdx";
 CALL, FILE = "../cmd/makethin.cmdx";
 CALL, FILE = "../init/track_nom.ini";
 
-READMYTABLE, FILE = "../input/initial_distribution_gauss.txt",
+READMYTABLE, FILE = "../input/initial_distribution_custom.txt",
              TABLE = initial_distribution;
 
 !-----------------------------------------------------------------------
@@ -93,8 +93,8 @@ ini_track_macro(zz): MACRO = {
 inc_f = (kqf1_start - kqf1_end) / (1 - Nturns_full);
 inc_d = (kqd_start - kqd_end) / (1 - Nturns_full);
 
-kqf1 := kqf1_start + inc_f * (tr$turni-1 + Nturns_start) ;
-kqd := kqd_start + inc_d * (tr$turni-1 + Nturns_start) ;
+kqf1 := kqf1_start + inc_f * (tr$turni-1 + Nturn_start) ;
+kqd := kqd_start + inc_d * (tr$turni-1 + Nturn_start) ;
 
 
 !-----------------------------------------------------------------------
@@ -105,8 +105,8 @@ OPTION, -INFO, -WARN;! otherwise you get warnings;
 ! TODO get new version with modern aperture definition
 OPTION, ECHO;
 
-TRACK, DUMP, ONEPASS, APERTURE,  RECLOSS, 
-       UPDATE, file = "../out/track_out_example/track_";
+TRACK, DUMP, ONETABLE=TRUE, ONEPASS, APERTURE,  RECLOSS, 
+       UPDATE, file = "../out/track_out_small_";
 
  j = 1;
  WHILE (j <= Nparticles) {
@@ -128,4 +128,4 @@ OPTION, INFO, WARN;
 !-----------------------------------------------------------------------
 ! Save results
 !-----------------------------------------------------------------------
-WRITE, TABLE = trackloss, FILE = "../out/losses_example.tfs";
+WRITE, TABLE = trackloss, FILE = "../out/losses_small.tfs";
