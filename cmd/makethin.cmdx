@@ -92,42 +92,42 @@ knob_extr_sext = 0; ! TODO Why start from here, not with nominal bump&sext?
 call, file = '../cmd/matchtune.cmdx';
 call, file = '../cmd/matchchroma.cmdx';
 
-extr_bump_knob_thin = extr_bump_knob / 4;
+knob_extr_bump_thin = knob_extr_bump / 4;
 
 select, flag=error, clear;
 select, flag=error, range=MPSH_rb.21202..1;
 select, flag=error, range=MPSH_rb.21202..2;
 select, flag=error, range=MPSH_rb.21202..3;
 select, flag=error, range=MPSH_rb.21202..4;
-efcomp, order:=0, dkn:=7.6765e-5 * extr_bump_knob_thin;
+efcomp, order:=0, dkn:=7.6765e-5 * knob_extr_bump_thin;
 
 select, flag=error, clear;
 select, flag=error, range=MPLH_rb.21431..1;
 select, flag=error, range=MPLH_rb.21431..2;
 select, flag=error, range=MPLH_rb.21431..3;
 select, flag=error, range=MPLH_rb.21431..4;
-efcomp, order:=0, dkn:=-0.49e-3 * extr_bump_knob_thin;
+efcomp, order:=0, dkn:=-0.49e-3 * knob_extr_bump_thin;
 
 select, flag=error, clear;
 select, flag=error, range=MPNH_rb.21732..1;
 select, flag=error, range=MPNH_rb.21732..2;
 select, flag=error, range=MPNH_rb.21732..3;
 select, flag=error, range=MPNH_rb.21732..4;
-efcomp, order:=0, dkn:=-0.33309e-3 * extr_bump_knob_thin;
+efcomp, order:=0, dkn:=-0.33309e-3 * knob_extr_bump_thin;
 
 select, flag=error, clear;
 select, flag=error, range=MPLH_rb.21995..1;
 select, flag=error, range=MPLH_rb.21995..2;
 select, flag=error, range=MPLH_rb.21995..3;
 select, flag=error, range=MPLH_rb.21995..4;
-efcomp, order:=0, dkn:=-0.2503e-3 * extr_bump_knob_thin;
+efcomp, order:=0, dkn:=-0.2503e-3 * knob_extr_bump_thin;
 
 select, flag=error, clear;
 select, flag=error, range=MPLH_rb.22195..1;
 select, flag=error, range=MPLH_rb.22195..2;
 select, flag=error, range=MPLH_rb.22195..3;
 select, flag=error, range=MPLH_rb.22195..4;
-efcomp, order:=0, dkn:=.35585e-3 * extr_bump_knob_thin;
+efcomp, order:=0, dkn:=.35585e-3 * knob_extr_bump_thin;
 select, flag=error, clear;
 
 !exec, find_misa_macro(1, 1, sftpro_ft);
