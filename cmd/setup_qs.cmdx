@@ -1,0 +1,163 @@
+!-----------------------------------------------------------------------
+! Nominal setup for SPS slow extraction (at resonance)
+!
+! F.M. Velotti - francesco.maria.velotti@cern.ch
+!
+!-----------------------------------------------------------------------
+
+OPTION, INFO, WARN, -ECHO ;
+OPTION, RBARC=FALSE; ! The length of a rectangular magnet is the dist-
+                     ! ance between the polefaces and not the arc length
+
+
+!-----------------------------------------------------------------------
+! Call files for correct initialization of SPS.
+! TODO: 2015 files don't work due to conflict between tcpc and crystal1?
+!-----------------------------------------------------------------------
+
+! SPS beam configuration, energy and emittances.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/beams/cngs_extraction.beamx' ;
+
+! Element definition file for SPS
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/elements/sps.ele' ;
+
+! Aperture definition file for SPS. These are groups of elements.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_1.dbx' ;
+
+! Aperture of QF1, QF2 and QD.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/aperture/aperturedb_2.dbx' ;
+
+! Sequence definition file for SPS.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq' ;
+
+! Aperture of some individual elements.
+! (Local file because some studies need changes)
+CALL, FILE = '../aperture/aperturedb_3.dbx' ;
+
+! Strength definition files for SPS: *.str & elements.str.
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/ft_qs_ext.str';
+OPTION, -ECHO;
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
+
+! Load the SPS sequence.
+USE, SEQUENCE = SPS;
+
+
+!-----------------------------------------------------------------------
+! Install markers relevant to the crystal MDs
+! (Crystals + new TCSM)
+! TODO: Should new TCSM go into sps repository? Or does it change often? (Also, what is the tcsm?)
+!-----------------------------------------------------------------------
+
+tcsm.new: MARKER;
+crystal1.ua9: MARKER;
+crystal2.ua9: MARKER;
+crystal3.ua9: MARKER;
+crystal4.ua9: MARKER;
+crystal5.ua9: MARKER;
+crystal_lss4.ua9: MARKER;
+
+! TODO: removes bshv and tecs?
+SEQEDIT, SEQUENCE = sps;
+! REMOVE, ELEMENT = TCSM.51934;
+ REMOVE, ELEMENT = bshv.51795;
+ REMOVE, ELEMENT = tecs.51797;
+ REMOVE, ELEMENT = tecs.51799;
+ INSTALL, ELEMENT = tcsm.new, AT = 5158.5722;
+ INSTALL, ELEMENT = crystal1.ua9, AT = 5178.1685;
+ INSTALL, ELEMENT = crystal2.ua9, AT = 5179.4295;
+ INSTALL, ELEMENT = crystal3.ua9, AT = 5179.9245;
+ INSTALL, ELEMENT = crystal4.ua9, AT = 5180.8295;
+ INSTALL, ELEMENT = crystal5.ua9, AT = 5181.3245;
+ INSTALL, ELEMENT = crystal_lss4.ua9, AT = 4031; !check?
+ FLATTEN;
+ENDEDIT;
+
+USE, SEQUENCE = SPS;
+
+
+!-----------------------------------------------------------------------
+! Install west extraction marker
+!-----------------------------------------------------------------------
+
+extwest: MARKER;
+
+SEQEDIT, SEQUENCE = sps;
+ REMOVE, ELEMENT = MKE.61631;
+ INSTALL, ELEMENT = extwest, AT = 4607.6692, FROM = AP.UP.ZS21633;
+ FLATTEN;
+ENDEDIT;
+USE, SEQUENCE = sps;
+
+!-----------------------------------------------------------------------
+! Initial match of tune and chroma
+!-----------------------------------------------------------------------
+
+CALL, FILE = '../cmd/matchtune_qs.cmdx';
+CALL, FILE = '../cmd/matchchroma.cmdx';
+
+!-----------------------------------------------------------------------
+! Set extraction sextupoles
+!-----------------------------------------------------------------------
+
+kLSE22402  := -0.168605 * knob_extr_sext;
+kLSE40602  := -0.168605 * knob_extr_sext;
+kLSEN42402 :=  0.168605*0.74/0.72 * knob_extr_sext;
+
+
+!-----------------------------------------------------------------------
+! Set extraction bump
+!-----------------------------------------------------------------------
+
+! Redefine bumpers as RBEND instead of KICKER
+MPSH_rb.21202: RBEND, L = .714, angle=0.0;
+MPLH_rb.21431: RBEND, L = 2.06, angle=0.0;
+MPNH_rb.21732: RBEND, L = 2.04, angle=0.0;
+MPLH_rb.21995: RBEND, L = 2.06, angle=0.0;
+MPLH_rb.22195: RBEND, L = 2.06, angle=0.0;
+
+! Replace old bumpers by new
+SEQEDIT, SEQUENCE = sps;
+ REPLACE, ELEMENT = MPSH.21202, BY = MPSH_rb.21202;
+ REPLACE, ELEMENT = MPLH.21431, BY = MPLH_rb.21431;
+ REPLACE, ELEMENT = MPNH.21732, BY = MPNH_rb.21732;
+ REPLACE, ELEMENT = MPLH.21995, BY = MPLH_rb.21995;
+ REPLACE, ELEMENT = MPLH.22195, BY = MPLH_rb.22195;
+ FLATTEN;
+ENDEDIT;
+USE, SEQUENCE = sps;
+
+! Macro to activate bump, to be called after any USE
+activate_bump(knob_value): MACRO = {
+ SELECT, FLAG = ERROR, RANGE = MPSH_rb.21202;
+ EFCOMP, ORDER = 0, DKN = 7.6765E-5 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
+
+ SELECT, FLAG = ERROR, RANGE = MPLH_rb.21431;
+ EFCOMP, ORDER = 0, DKN = -0.49E-3 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
+
+ SELECT, FLAG = ERROR, RANGE = MPNH_rb.21732;
+ EFCOMP, ORDER = 0, DKN = -0.33309E-3 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
+
+ SELECT, FLAG = ERROR, RANGE = MPLH_rb.21995;
+ EFCOMP, ORDER = 0, DKN = -0.2503e-3 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
+
+ SELECT, FLAG = ERROR, RANGE = MPLH_rb.22195;
+ EFCOMP, ORDER = 0, DKN = 0.35585e-3 * knob_value;
+ SELECT, FLAG = ERROR, CLEAR;
+};
+
+EXEC, activate_bump(knob_extr_bump);
+
+
+!-----------------------------------------------------------------------
+! Rematch tune and chroma
+!-----------------------------------------------------------------------
+
+CALL, FILE = '../cmd/matchchroma.cmdx';
+CALL, FILE = '../cmd/matchtune_qs.cmdx';
+
+RETURN;

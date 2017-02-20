@@ -1,0 +1,70 @@
+!--------------------------------------------------------------------------
+! atan2 macro
+!--------------------------------------------------------------------------
+
+atan2(_ans, _arg1, _arg2):  MACRO = {
+ IF (_arg2 > 0) {
+  _ans = ATAN(_arg1/_arg2) ;
+ }
+ ELSEIF (_arg1 > 0) {
+  _ans = PI/2-ATAN(_arg2/_arg1) ;
+ }
+ ELSEIF (_arg1 < 0) {
+  _ans = 0-PI/2-ATAN(_arg2/_arg1) ;
+ }
+ ELSEIF (_arg2 < 0) {
+  _ans = ATAN(_arg1/_arg2)+PI ;
+ }
+ ELSE {
+  INFO, VERIFY ;
+  _ans = WARNING_ATAN2 + UNDEFINED_BECAUSE_X0Y0 ;
+ }
+ IF (_ans < 0) {
+  _ans = _ans + 2*PI ;
+ }
+};
+
+
+!LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
+! Calculate the virtual sextupole properties
+!LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
+
+s_norm := 0.5 * TABLE(TWISS, K2L) * TABLE(TWISS, BETX) * SQRT(TABLE(TWISS, BETX)) ;
+re_svirt := TABLE(TWISS, s_norm) * COS(3 * TABLE(TWISS, MUX) * 2*PI) ;
+im_svirt := TABLE(TWISS, s_norm) * SIN(3 * TABLE(TWISS, MUX) * 2*PI) ;
+
+SELECT, FLAG = TWISS, CLEAR ;
+SELECT, FLAG=TWISS, COLUMN=NAME, S, BETX, ALFX, MUX, KOL, K1L, K2L, s_norm, re_svirt, im_svirt, X, PX, DX, DPX;
+TWISS, CHROM = TRUE, FILE = '../out/svirt.tfs';
+
+re_svirt_tot = 0 ;
+im_svirt_tot = 0 ;
+
+svirt_iterator = 1 ;
+iterator_end = TABLE(TWISS, TABLELENGTH) ;
+
+! Iterate through table to find total components.
+OPTION, -INFO ;
+WHILE ( svirt_iterator <= iterator_end ) {
+SETVARS TABLE = TWISS, ROW = svirt_iterator ;
+re_svirt_tot = re_svirt_tot + re_svirt ;
+im_svirt_tot = im_svirt_tot + im_svirt ;
+svirt_iterator = svirt_iterator + 1 ;
+}
+OPTION, INFO ;
+
+! Resulting values
+str_svirt = SQRT(re_svirt_tot^2 + im_svirt_tot^2) ;
+EXEC, ATAN2(mu_svirt, im_svirt_tot,re_svirt_tot) ;
+mu_svirt = mu_svirt/3 ;
+
+mu_zs = TABLE(TWISS, AP.UP.ZS21633, MUX) * PI ;
+IF ( mu_svirt > mu_zs ) {
+dmu_zs = TABLE(SUMM, Q1) + mu_zs - mu_svirt ; }
+ELSE {
+dmu_zs = mu_zs - mu_svirt ; }
+
+WHILE ( dmu_zs > ( 2 * PI ) ) { dmu_zs = dmu_zs - 2 * PI ; }
+
+
+VALUE, re_svirt_tot, im_svirt_tot, str_svirt, mu_svirt, mu_zs, dmu_zs;
