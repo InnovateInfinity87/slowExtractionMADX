@@ -1,0 +1,17 @@
+!-----------------------------------------------------------------------
+! Calculation of nominal virtual sextupole strength
+!
+! L.S. Stoel - linda.susanne.stoel@cern.ch
+!
+!-----------------------------------------------------------------------
+
+OPTION, INFO, WARN, -ECHO;
+
+!-----------------------------------------------------------------------
+! Initialization
+! (Will set OPTION, RBARC=FALSE;)
+!-----------------------------------------------------------------------
+
+CALL, FILE = "../init/nominal.ini" ;
+CALL, FILE = "../cmd/setup_nominal.cmdx";
+CALL, FILE = "../cmd/svirt.cmdx";
