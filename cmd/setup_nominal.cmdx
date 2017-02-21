@@ -150,6 +150,7 @@ EXEC, activate_bump(knob_extr_bump);
 ! Rematch tune and chroma
 !-----------------------------------------------------------------------
 
+CALL, FILE = '../cmd/matchtune.cmdx';
 CALL, FILE = '../cmd/matchchroma.cmdx';
 CALL, FILE = '../cmd/matchtune.cmdx';
 
