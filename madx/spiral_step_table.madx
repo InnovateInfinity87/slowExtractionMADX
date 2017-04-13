@@ -45,31 +45,31 @@ get_spiral_step(x0_bump, px0_bump): MACRO = {
  x_zs = 68e-3;
  px_zs = m * (x_zs - x0_bump) + px0_bump;
 
- zs_start2->x = x_zs;
- zs_start2->px = px_zs;
+ zs_start->x = x_zs;
+ zs_start->px = px_zs;
 
- SAVEBETA, LABEL = turn1, PLACE = SPS2AP.UP.ZS21633_P_;
- TWISS, DELTAP = 0.0, beta0 = zs_start2;
+ SAVEBETA, LABEL = turn1, PLACE = SPSAP.UP.ZS21633_P_;
+ TWISS, DELTAP = 0.0, beta0 = zs_start;
 
- SAVEBETA, LABEL = turn2, PLACE = SPS2AP.UP.ZS21633_P_;
+ SAVEBETA, LABEL = turn2, PLACE = SPSAP.UP.ZS21633_P_;
  TWISS, DELTAP = 0.0, beta0 = turn1;
 
  TWISS, DELTAP = 0.0, beta0 = turn2;
 
- delta_x = TABLE(TWISS, SPS2AP.UP.ZS21633_P_, X) - x_zs;
- delta_px = TABLE(TWISS, SPS2AP.UP.ZS21633_P_, PX) - px_zs;
+ delta_x = TABLE(TWISS, SPSAP.UP.ZS21633_P_, X) - x_zs;
+ delta_px = TABLE(TWISS, SPSAP.UP.ZS21633_P_, PX) - px_zs;
 
- final_x = TABLE(TWISS, SPS2AP.UP.ZS21633_P_, X);
- final_px = TABLE(TWISS, SPS2AP.UP.ZS21633_P_, PX);
+ final_x = TABLE(TWISS, SPSAP.UP.ZS21633_P_, X);
+ final_px = TABLE(TWISS, SPSAP.UP.ZS21633_P_, PX);
 };
 
 
 !-----------------------------------------------------------------------
 ! Calculate spiral step for various bump settings
 !-----------------------------------------------------------------------
-tablen = 40
-bumpstart = 0.8
-bumpend = 1.2
+tablen = 40;
+bumpstart = 0.8;
+bumpend = 1.2;
 
 i = 0;
 WHILE(i < tablen){
@@ -80,9 +80,10 @@ WHILE(i < tablen){
  EXEC, activate_bump(knob_value);
 ! TODO: Rematch tune+chroma?
 
- TWISS; !
- x0 = TABLE(TWISS, AP.UP.ZS21633, X);
- px0 = TABLE(TWISS, AP.UP.ZS21633, PX);
+ SAVEBETA, LABEL = zs_start, PLACE = AP.UP.ZS21633;
+ TWISS;
+ x0 = TABLE(TWISS, SPSAP.UP.ZS21633_P_, X);
+ px0 = TABLE(TWISS, SPSAP.UP.ZS21633_P_, PX);
      
  EXEC, get_spiral_step(x0, px0);
  FILL, TABLE = spiral_step;

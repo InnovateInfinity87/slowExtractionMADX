@@ -1,0 +1,41 @@
+!-----------------------------------------------------------------------
+! Match chroma using OP knobs
+!-----------------------------------------------------------------------
+
+! Machine settings for main sextupoles, from macro by H. Bartosik
+
+LSDA0 = -0.149628261;
+LSDB0 = -0.145613183;
+LSFA0 = 0.063256459;
+LSFB0 = 0.121416689;
+LSFC0 = 0.063256459;
+
+logical.LSDAQPH = .011283;  
+logical.LSDBQPH = -.040346;
+logical.LSFAQPH = .04135;
+logical.LSFBQPH = .079565;
+logical.LSFCQPH = .04135;
+ 
+logical.LSDAQPV = -.11422;
+logical.LSDBQPV = -.08606;
+logical.LSFAQPV = .0097365;
+logical.LSFBQPV = .016931;
+logical.LSFCQPV = .0097365;
+ 
+kLSDA := logical.LSDAQPH*QPH_setvalue + logical.LSDAQPV*QPV_setvalue + LSDA0;
+kLSDB := logical.LSDBQPH*QPH_setvalue + logical.LSDBQPV*QPV_setvalue + LSDB0;
+kLSFA := logical.LSFAQPH*QPH_setvalue + logical.LSFAQPV*QPV_setvalue + LSFA0;
+kLSFB := logical.LSFBQPH*QPH_setvalue + logical.LSFBQPV*QPV_setvalue + LSFB0;
+kLSFC := logical.LSFCQPH*QPH_setvalue + logical.LSFCQPV*QPV_setvalue + LSFC0;
+
+
+! Done setting main sextupoles. Use params from non-linear model to
+! match measured chroma.
+
+MATCH, SEQUENCE = sps ;
+ VARY, NAME = QPH_setvalue, STEP = 1E-6 ;
+ VARY, NAME = QPV_setvalue, STEP = 1E-6 ;
+ GLOBAL, SEQUENCE = sps, DQ1 = dqh_norm * qh ;
+ GLOBAL, SEQUENCE = sps, DQ2 = dqv_norm * qv ;
+ LMDIF, CALLS = 500, TOLERANCE = 1e-6 ;
+ENDMATCH ;

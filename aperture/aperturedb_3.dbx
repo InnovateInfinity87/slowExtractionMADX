@@ -51,13 +51,25 @@ seqedit, sequence=sps;
 !! The aperture settings have been taken from operational files (see following):
 !! http://cern-accelerators-optics.web.cern.ch/cern-accelerators-optics/SPS/position_septa.xls  B.Balhan
 
-
+! Nominal first ZS
+!/**********
 Select, flag=seqedit, pattern="^ZS.21633$";
 ap.UP.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={67.9/1000,0.046/2};
 ap.DO.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={63.8/1000,0.046/2};
 Install, element=ap.do.ZS21633, at:=ZS->l/2, from=selected;
 Install, element=ap.up.ZS21633, at:=-ZS->l/2, from=selected;
 Select, flag=seqedit, clear = true;
+!**********/
+
+! No bump first ZS
+/**********
+Select, flag=seqedit, pattern="^ZS.21633$";
+ap.UP.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={67.9/1000,0.046/2}, APER_OFFSET ={-0.04242021652,0.0};
+ap.DO.ZS21633:AP,APERTYPE=RECTANGLE,APERTURE={63.8/1000,0.046/2}, APER_OFFSET ={-0.04242021652,0.0};
+Install, element=ap.do.ZS21633, at:=ZS->l/2, from=selected;
+Install, element=ap.up.ZS21633, at:=-ZS->l/2, from=selected;
+Select, flag=seqedit, clear = true;
+**********/
 
 Select, flag=seqedit, pattern="^ZS.21638$";
 ap.UP.ZS21638:AP,APERTYPE=RECTANGLE,APERTURE={62.73/1000,0.046/2};

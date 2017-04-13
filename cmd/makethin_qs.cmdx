@@ -1,0 +1,113 @@
+!-----------------------------------------------------------------------
+! Conversion of the thick SPS sequence to a thin one
+!
+! F.M. Velotti - francesco.maria.velotti@cern.ch
+!
+!-----------------------------------------------------------------------
+
+use, sequence = sps;
+
+select, flag = makethin, clear;
+select, flag = makethin, class = quadrupole, slice = 4;
+select, flag = makethin, class = rbend, slice = 4;
+select, flag = makethin, class = sextupole, slice = 1;
+
+MAKETHIN, SEQUENCE = sps, STYLE = teapot;
+
+use, sequence = sps;
+
+knob_extr_sext_val = knob_extr_sext;
+knob_extr_sext = 0; ! TODO Why start from here, not with nominal bump&sext?
+call, file = '../cmd/matchtune_qs.cmdx';
+call, file = '../cmd/matchchroma.cmdx';
+
+knob_extr_bump = knob_extr_bump * (4.389067256/4.441299501); !scale close to nominal bump
+knob_extr_bump_thin := knob_extr_bump / 4;
+
+select, flag=error, clear;
+select, flag=error, range=MPSH_rb.21202..1;
+select, flag=error, range=MPSH_rb.21202..2;
+select, flag=error, range=MPSH_rb.21202..3;
+select, flag=error, range=MPSH_rb.21202..4;
+efcomp, order:=0, dkn=7.6765e-5 * knob_extr_bump_thin;
+
+select, flag=error, clear;
+select, flag=error, range=MPLH_rb.21431..1;
+select, flag=error, range=MPLH_rb.21431..2;
+select, flag=error, range=MPLH_rb.21431..3;
+select, flag=error, range=MPLH_rb.21431..4;
+efcomp, order:=0, dkn=-0.49e-3 * knob_extr_bump_thin;
+
+select, flag=error, clear;
+select, flag=error, range=MPNH_rb.21732..1;
+select, flag=error, range=MPNH_rb.21732..2;
+select, flag=error, range=MPNH_rb.21732..3;
+select, flag=error, range=MPNH_rb.21732..4;
+efcomp, order:=0, dkn=-0.33309e-3 * knob_extr_bump_thin;
+
+select, flag=error, clear;
+select, flag=error, range=MPLH_rb.21995..1;
+select, flag=error, range=MPLH_rb.21995..2;
+select, flag=error, range=MPLH_rb.21995..3;
+select, flag=error, range=MPLH_rb.21995..4;
+efcomp, order:=0, dkn=-0.2503e-3 * knob_extr_bump_thin;
+
+select, flag=error, clear;
+select, flag=error, range=MPLH_rb.22195..1;
+select, flag=error, range=MPLH_rb.22195..2;
+select, flag=error, range=MPLH_rb.22195..3;
+select, flag=error, range=MPLH_rb.22195..4;
+efcomp, order:=0, dkn=.35585e-3 * knob_extr_bump_thin;
+select, flag=error, clear;
+
+!exec, find_misa_macro(1, 1, sftpro_ft);
+
+!call, file = "../in/stren.out"; ! TODO file missing
+
+knob_extr_sext = knob_extr_sext_val; !TODO shouldn't we rematch?
+
+/**********
+temp_qh = table(summ, q1);
+temp_qv = table(summ, q2);
+
+match, sequence=SPS;
+
+Global, Q1 = temp_qh + 0.0585, Q2= temp_qv;
+
+VARY, name=KQD, step=0.0001;
+VARY, name=KQF1, step=0.0001;
+
+Lmdif,calls=10,tolerance=1.0e-21;
+Endmatch;
+***********/
+
+
+!-----------------------------------------------------------------------
+! Save thin sequence for generation of input files
+! (New file does not overwrite input, but may be copied there when necessary)
+!-----------------------------------------------------------------------
+
+select, flag=twiss, clear;
+select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy, dpx, dpy;
+TWISS, DELTAP=0.0;
+write, table=twiss, file="../out/twiss_thin_qs.tfs";
+
+/**********
+!-----------------------------------------------------------------------
+! Check different tunes
+!-----------------------------------------------------------------------
+
+qh = 26.62;
+CALL, FILE = "../cmd/matchtune_qs.cmdx";
+VALUE, qh, kqd, kqf1, kqf2;
+
+qh = 80/3;
+CALL, FILE = "../cmd/matchtune_qs.cmdx";
+VALUE, qh, kqd, kqf1, kqf2;
+
+qh = 26.68;
+CALL, FILE = "../cmd/matchtune_qs.cmdx";
+VALUE, qh, kqd, kqf1, kqf2;
+
+EXIT;
+**********/

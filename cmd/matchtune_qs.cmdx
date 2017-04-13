@@ -1,0 +1,16 @@
+!-----------------------------------------------------------------------
+! Match tune
+!-----------------------------------------------------------------------
+
+MATCH, USE_MACRO, SEQUENCE = sps ;
+ VARY, NAME = kQD, STEP = 0.0001 ;
+ VARY, NAME = kQF1, STEP = 0.0001 ;
+ VARY, NAME = kQF2, STEP = 0.0001 ;
+ USE_MACRO, NAME = tunematchmacro;
+ CONSTRAINT, WEIGHT = 1e0, EXPR = dmuzs = dmuwant ;
+ CONSTRAINT, EXPR = TABLE(SUMM, Q1) = qh;
+ CONSTRAINT, EXPR = TABLE(SUMM, Q2) = qv;
+ LMDIF, CALLS = 100, TOLERANCE = 1.0E-21 ;
+ENDMATCH ;
+
+RETURN;

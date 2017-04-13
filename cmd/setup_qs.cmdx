@@ -35,17 +35,13 @@ CALL, FILE = '/afs/cern.ch/eng/sps/2014/sequence/sps.seq' ;
 CALL, FILE = '../aperture/aperturedb_3.dbx' ;
 
 ! Strength definition files for SPS: *.str & elements.str.
-CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/ft_noqs_ext.str';
+CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/ft_qs_ext.str';
 OPTION, -ECHO;
 CALL, FILE = '/afs/cern.ch/eng/sps/2014/strength/elements.str';
 
-! TODO dispacements of LSS1 quads?? Needs bumpers or no? 
-! TODO put in macro?? (uses errors, so usesless after USE)
-!CALL, FILE = "/afs/cern.ch/eng/sps/2014/alignments/
-!      lss1_q171819_displacement.madx";
-
 ! Load the SPS sequence.
 USE, SEQUENCE = SPS;
+
 
 !-----------------------------------------------------------------------
 ! Install markers relevant to the crystal MDs
@@ -81,21 +77,32 @@ USE, SEQUENCE = SPS;
 
 
 !-----------------------------------------------------------------------
+! Install west extraction marker
+!-----------------------------------------------------------------------
+
+extwest: MARKER;
+
+SEQEDIT, SEQUENCE = sps;
+ REMOVE, ELEMENT = MKE.61631;
+ INSTALL, ELEMENT = extwest, AT = 4607.6692, FROM = AP.UP.ZS21633;
+ FLATTEN;
+ENDEDIT;
+USE, SEQUENCE = sps;
+
+!-----------------------------------------------------------------------
 ! Initial match of tune and chroma
 !-----------------------------------------------------------------------
 
-CALL, FILE = '../cmd/matchtune.cmdx';
+CALL, FILE = '../cmd/matchtune_qs.cmdx';
 CALL, FILE = '../cmd/matchchroma.cmdx';
-
 
 !-----------------------------------------------------------------------
 ! Set extraction sextupoles
 !-----------------------------------------------------------------------
 
-klse10602 := extr_sext * knob_extr_sext;
-klse22402 := extr_sext * knob_extr_sext;
-klse40602 := extr_sext * knob_extr_sext;
-klse52402 := extr_sext * knob_extr_sext;
+kLSE22402  := -0.168605 * knob_extr_sext;
+kLSE40602  := -0.168605 * knob_extr_sext;
+kLSEN42402 :=  0.168605*0.74/0.72 * knob_extr_sext;
 
 
 !-----------------------------------------------------------------------
@@ -150,8 +157,7 @@ EXEC, activate_bump(knob_extr_bump);
 ! Rematch tune and chroma
 !-----------------------------------------------------------------------
 
-CALL, FILE = '../cmd/matchtune.cmdx';
 CALL, FILE = '../cmd/matchchroma.cmdx';
-CALL, FILE = '../cmd/matchtune.cmdx';
+CALL, FILE = '../cmd/matchtune_qs.cmdx';
 
 RETURN;

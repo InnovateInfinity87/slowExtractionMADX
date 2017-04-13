@@ -92,10 +92,9 @@ CALL, FILE = '../cmd/matchchroma.cmdx';
 ! Set extraction sextupoles
 !-----------------------------------------------------------------------
 
-klse10602 := extr_sext * knob_extr_sext;
-klse22402 := extr_sext * knob_extr_sext;
-klse40602 := extr_sext * knob_extr_sext;
-klse52402 := extr_sext * knob_extr_sext;
+kLSE22402  := -0.168605 * knob_extr_sext;
+kLSE40602  := -0.168605 * knob_extr_sext;
+kLSEN42402 :=  0.168605*0.74/0.72 * knob_extr_sext;
 
 
 !-----------------------------------------------------------------------
@@ -150,7 +149,6 @@ EXEC, activate_bump(knob_extr_bump);
 ! Rematch tune and chroma
 !-----------------------------------------------------------------------
 
-CALL, FILE = '../cmd/matchtune.cmdx';
 CALL, FILE = '../cmd/matchchroma.cmdx';
 CALL, FILE = '../cmd/matchtune.cmdx';
 
