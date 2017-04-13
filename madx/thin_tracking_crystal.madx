@@ -1,0 +1,244 @@
+!------------------------------------------------------------
+!Read input and create output tables
+!------------------------------------------------------------
+
+x_obump(knob_value) : macro = {
+    
+    value, knob_value;
+
+    eoption, add = true;
+    
+     select, flag=error,pattern="MPSH_rb\.21202.*" ;
+     efcomp, order:=0, dkn= 2.331301861e-05 * knob_value * (-1 / 4);
+     EPRINT;
+     select, flag=error, clear;
+     select, flag=error, pattern="MPLH_rb\.21431.*";
+     efcomp, order:=0, dkn= -9.91281169e-06   * knob_value * (-1 / 4);
+     EPRINT;
+     select, flag=error, clear;
+     select, flag=error, pattern="MPNH_rb\.21732.*";
+     efcomp, order:=0, dkn=  2.98e-05 * knob_value * (-1 / 4);
+     EPRINT;
+     select, flag=error, clear;
+     select, flag=error, pattern="MPLH_rb\.21995.*";
+     efcomp, order:=0, dkn= -1.923181311e-05 * knob_value * (-1 / 4);
+     EPRINT;
+     select, flag=error, clear;
+     select, flag=error, pattern="MPLH_rb\.22195.*";
+     efcomp, order:=0, dkn= 2.105219176e-05 * knob_value * (-1 / 4);
+     EPRINT;
+     select, flag=error, clear;
+
+};
+
+px_obump(knob_value) : macro = {
+    
+    value, knob_value;
+
+    eoption, add = true;
+    
+     select, flag=error,pattern="MPSH_rb\.21202.*" ;
+     efcomp, order:=0, dkn= 9.929676756e-06 * knob_value * (-1e2 / 4);
+     EPRINT;
+     select, flag=error, clear;
+     select, flag=error, pattern="MPLH_rb\.21431.*";
+     efcomp, order:=0, dkn= 2.600240449e-07   * knob_value * (-1e2 / 4);
+     EPRINT;
+     select, flag=error, clear;
+     select, flag=error, pattern="MPNH_rb\.21732.*";
+     efcomp, order:=0, dkn=  2.174863504e-05 * knob_value * (-1e2 / 4);
+     EPRINT;
+     select, flag=error, clear;
+     select, flag=error, pattern="MPLH_rb\.21995.*";
+     efcomp, order:=0, dkn= -5.128495572e-06 * knob_value * (-1e2 / 4);
+     EPRINT;
+     select, flag=error, clear;
+     select, flag=error, pattern="MPLH_rb\.22195.*";
+     efcomp, order:=0, dkn= 8.373821994e-06 * knob_value * (-1e2 / 4);
+     EPRINT;
+     select, flag=error, clear;
+
+};
+!readmytable,file=initial_distribution_fat_halo_60.txt, table=initial_distribution;
+!readmytable,file=initial_distribution.txt, table=initial_distribution;
+readmytable,file=initial_distribution_long.txt, table=initial_distribution;
+
+create, table = tune_var, column = giri, kqf1, kqf2, kqd;
+
+ini_track_macro(zz, dpp_set): macro = {
+    x0 = table(initial_distribution, x, zz);
+    px0 = table(initial_distribution, px, zz);
+    y0 = table(initial_distribution, y, zz);
+    py0 = table(initial_distribution, py, zz);
+    t0  = table(initial_distribution, t, zz);
+
+    value, x0, px0, dpp_set;
+    start, x=x0, px=px0, y=y0, py=py0, t=0, pt=dpp_set + tgauss(1) * 2.5e-4;
+    !start, x=x0, px=px0, y=y0, py=py0, t=0, pt=dpp_set;
+
+};
+make_tracking(file_name, dpp_set, minus) : macro = {
+
+  tr$macro(turn): macro = {
+            
+            giri = turn;
+            fill, table = tune_var;
+                  
+           };
+  if (minus == 1){
+    dpp_variable = dpp_set * (-1);
+  }
+  else {
+    dpp_variable = dpp_set;
+  };
+
+  /******************************
+  * Qh = 26.63
+  ******************************/
+
+  kqf1_start_nom =        0.014638481 ;
+  kqd_start_nom =     -0.01463347009 ;
+
+  /*****************************
+  * Qh = 26.6764
+  *****************************/
+
+  kqf1_end_nom =      0.01465555361 ;
+  kqd_end_nom =      -0.0146366498 ;
+
+  /*****************************
+  * Qh = 26.64
+  *****************************/
+  kqf1_start =      0.01464216062 ;
+  kqd_start =     -0.01463415566 ;
+
+  /******************************
+  * 26.6864
+  ******************************/
+
+  kqf1_end =      0.01465923277 ;
+  kqd_end =     -0.01463733464 ;
+
+  /******************************
+  * 26.615
+  ******************************/
+
+  !kqf1_start =      0.01463296141 ;
+  !kqd_start =     -0.01463244145 ;
+    
+  
+  use, sequence = sps;
+  select, flag=error, clear;
+  misa_knob = 0.0;
+
+  SELECT, FLAG= ERROR, PATTERN= "MBB.21530";
+  EALIGN, DX= 0.0 + misa_knob, DTHETA=798.7e-6;
+
+  SELECT, FLAG= ERROR, PATTERN= "MBB.21550";
+  EALIGN, DX= 5.0e-3 + misa_knob, DTHETA=798.7e-6;
+
+  SELECT, FLAG= ERROR, PATTERN= "MBA.21570";
+  EALIGN, DX= 10.0e-3 + misa_knob, DTHETA=159.7e-6;
+
+  SELECT, FLAG= ERROR, PATTERN= "MBA.21590";
+  EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+
+  SELECT, FLAG= ERROR, PATTERN= "VVSB.21601";
+  EALIGN, DX= 11.0e-3 + misa_knob, DTHETA=0.0;
+  
+  
+  select, flag=error, clear;
+  select, flag=error, pattern="MPSH_rb\.21202.*";
+  efcomp, order:=0, dkn:=7.6765e-5 * knob;
+  select, flag=error, clear;
+  
+  select, flag=error, pattern="MPLH_rb\.21431.*";
+  efcomp, order:=0, dkn:=-0.49e-3 * knob;
+  select, flag=error, clear;
+  
+  select, flag=error, pattern="MPNH_rb\.21732.*";
+  efcomp, order:=0, dkn:=-0.33309e-3 * knob;
+  select, flag=error, clear;
+  
+  select, flag=error, pattern="MPLH_rb\.21995.*";
+  efcomp, order:=0, dkn:=-0.2503e-3 * knob;
+  select, flag=error, clear;
+  
+  select, flag=error, pattern="MPLH_rb\.22195.*";
+  efcomp, order:=0, dkn:=.35585e-3 * knob;
+  select, flag=error, clear;
+  
+  x_knob_value = 406 * dpp_variable + (-0.0765 * dpp_variable * 1e3);
+  px_knob_value = ( -20.667 * dpp_variable) + (-0.0022 * dpp_variable * 1e3) ;
+  
+  exec, x_obump(x_knob_value);
+  exec, px_obump(px_knob_value);
+
+  TWISS, DELTAP=0.0;
+  !kqf1 = kqf1_start ;
+  !kqd  = kqd_start ;
+  qh = 26.66666 - dpp_variable * table(summ, dq1);
+  qv = 26.58 ;
+  match, sequence=SPS;
+
+
+  Global, Q1=qh, Q2= qv;
+  VARY, name=KQD, step=0.0001;
+  VARY, name=KQF1, step=0.0001;
+  Lmdif,calls=10,tolerance=1.0e-21;
+  Endmatch;
+
+  select, flag=twiss, clear;
+  select, flag=twiss, column=name,s,l,x,betx,dx,aper_1,y,bety,dy,aper_2, alfx, alfy, px, py, mux, muy, dpx, dpy;
+  TWISS, DELTAP=dpp_variable;
+  write, table=twiss, file="twiss_before_track_thin_file_name.tfs";
+  value, table(twiss, AP.UP.ZS21633, mux) - table(twiss, crystal3.ua9, mux) + 26.666;
+
+  m_f = (kqf1_start_nom - kqf1_end_nom) / (1 - 204565);
+  m_d = (kqd_start_nom - kqd_end_nom) / (1 - 204565);
+
+  n_f = kqf1_start - m_f;
+  n_d = kqd_start - m_d;
+
+  !kqf1 := m_f * tr$turni + n_f ;
+  !kqd := m_d * tr$turni + n_d ;
+
+
+
+  !readmytable,file=initial_distribution.txt, table=initial_distribution;
+
+  option,-info;
+                          ! otherwise you get warnings
+
+  option, -warn, -echo, -info;
+
+  TRACK, onetable=true, onepass, recloss, aperture,
+  file = "/home/fvelotti/Dropbox/Slow_extraction/cryst_res_tracking/track_out_file_name_";
+
+      j = 1;
+      while(j <= Nparticles)
+      {
+          value,j;
+
+          exec, ini_track_macro($j, dpp_variable);
+
+          j=j+1;
+
+      };
+
+      !observe, place = crystal2.ua9;
+      observe, place = crystal5_observer;
+      !observe, place = ap.up.zs21633;
+      observe, place = zs_ff;
+      run, turns = 300;
+
+  ENDTRACK;
+
+  option, warn;
+  write, table = trackloss, file = "/home/fvelotti/Dropbox/Slow_extraction/cryst_res_tracking/losses_file_name.tfs";
+
+};
+
+delete, table = trackloss;
+delete, table = tracksumm;
+delete, table = trackone;
