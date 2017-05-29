@@ -29,6 +29,8 @@ atan2(_ans, _arg1, _arg2):  MACRO = {
 ! Calculate the virtual sextupole properties
 !LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
 
+PRINT, TEXT="WARNING: I think there is a mistake in this file, phase advance of multipole before and after ZS should be treated differently.";
+
 s_norm := 0.5 * TABLE(TWISS, K2L) * TABLE(TWISS, BETX) * SQRT(TABLE(TWISS, BETX)) ;
 re_svirt := TABLE(TWISS, s_norm) * COS(3 * TABLE(TWISS, MUX) * 2*PI) ;
 im_svirt := TABLE(TWISS, s_norm) * SIN(3 * TABLE(TWISS, MUX) * 2*PI) ;
