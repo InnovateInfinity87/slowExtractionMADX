@@ -2,13 +2,16 @@
 ! Match tune
 !-----------------------------------------------------------------------
 
+value, itsme;
+
 MATCH, USE_MACRO ;
  VARY, NAME = kQD, STEP = 0.0001 ;
  VARY, NAME = kQF1, STEP = 0.0001 ;
  m1: MACRO={
   TWISS, DELTAP=dpp_matchtune;
  }
- GLOBAL, Q1 = qh, Q2 = qv ;
+ CONSTRAINT, EXPR= TABLE(SUMM,Q1)=qh;
+ CONSTRAINT, EXPR= TABLE(SUMM,Q2)=qv;
  LMDIF, CALLS = 100, TOLERANCE = 1.0E-21 ;
 ENDMATCH ;
 
