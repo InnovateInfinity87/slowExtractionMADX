@@ -2,8 +2,6 @@
 ! Match tune
 !-----------------------------------------------------------------------
 
-value, itsme;
-
 MATCH, USE_MACRO ;
  VARY, NAME = kQD, STEP = 0.0001 ;
  VARY, NAME = kQF1, STEP = 0.0001 ;
